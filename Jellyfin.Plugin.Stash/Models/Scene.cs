@@ -12,11 +12,20 @@ namespace Stash.Models
         [JsonProperty(PropertyName = "title")]
         public string Title { get; set; }
 
+        [JsonProperty(PropertyName = "code")]
+        public string Code { get; set; }
+
         [JsonProperty(PropertyName = "details")]
         public string Details { get; set; }
 
+        [JsonProperty(PropertyName = "director")]
+        public string Director { get; set; }
+
         [JsonProperty(PropertyName = "date")]
         public DateTime? Date { get; set; }
+
+        [JsonProperty(PropertyName = "rating100")]
+        public int? Rating100 { get; set; }
 
         [JsonProperty(PropertyName = "paths")]
         public Paths Paths { get; set; }
@@ -29,5 +38,8 @@ namespace Stash.Models
 
         [JsonProperty(PropertyName = "performers")]
         public List<Performer> Performers { get; set; }
+
+        [JsonProperty(PropertyName = "stash_ids")]
+        public List<StashId> StashIds { get; set; }
     }
 }

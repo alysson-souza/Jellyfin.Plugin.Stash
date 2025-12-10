@@ -17,6 +17,10 @@ using Stash.Helpers;
 using Stash.Helpers.Utils;
 using Stash.Models;
 
+#if !__EMBY__
+using Jellyfin.Data.Enums;
+#endif
+
 namespace Stash.Providers
 {
     public static class StashAPI
@@ -168,6 +172,21 @@ namespace Stash.Providers
             result.Item.Overview = sceneData.Details;
             result.Item.PremiereDate = sceneData.Date;
 
+            // Map scene code to OriginalTitle
+            if (!string.IsNullOrEmpty(sceneData.Code))
+            {
+                result.Item.OriginalTitle = sceneData.Code;
+            }
+
+            // Map rating100 (0-100) to CommunityRating (0-10)
+            if (sceneData.Rating100.HasValue)
+            {
+                result.Item.CommunityRating = sceneData.Rating100.Value / 10.0f;
+            }
+
+            // Add StashDB provider IDs
+            AddStashIds(result.Item.ProviderIds, sceneData.StashIds);
+
             var studioName = sceneData.Studio?.Name;
             if (!string.IsNullOrEmpty(studioName))
             {
@@ -185,6 +204,21 @@ namespace Stash.Providers
                 var genreName = genreLink.Name;
 
                 result.Item.AddGenre(genreName);
+            }
+
+            // Add director if present
+            if (!string.IsNullOrEmpty(sceneData.Director))
+            {
+                var director = new PersonInfo
+                {
+                    Name = sceneData.Director,
+#if __EMBY__
+                    Type = PersonType.Director,
+#else
+                    Type = PersonKind.Director,
+#endif
+                };
+                result.AddPerson(director);
             }
 
             foreach (var actorLink in sceneData.Performers)
@@ -228,6 +262,21 @@ namespace Stash.Providers
             result.Item.Overview = sceneData.Details;
             result.Item.PremiereDate = sceneData.Date;
 
+            // Map scene code to OriginalTitle
+            if (!string.IsNullOrEmpty(sceneData.Code))
+            {
+                result.Item.OriginalTitle = sceneData.Code;
+            }
+
+            // Map rating100 (0-100) to CommunityRating (0-10)
+            if (sceneData.Rating100.HasValue)
+            {
+                result.Item.CommunityRating = sceneData.Rating100.Value / 10.0f;
+            }
+
+            // Add StashDB provider IDs
+            AddStashIds(result.Item.ProviderIds, sceneData.StashIds);
+
             var studioName = sceneData.Studio?.Name;
             if (!string.IsNullOrEmpty(studioName))
             {
@@ -245,6 +294,21 @@ namespace Stash.Providers
                 var genreName = genreLink.Name;
 
                 result.Item.AddGenre(genreName);
+            }
+
+            // Add director if present
+            if (!string.IsNullOrEmpty(sceneData.Director))
+            {
+                var director = new PersonInfo
+                {
+                    Name = sceneData.Director,
+#if __EMBY__
+                    Type = PersonType.Director,
+#else
+                    Type = PersonKind.Director,
+#endif
+                };
+                result.AddPerson(director);
             }
 
             foreach (var actorLink in sceneData.Performers)
@@ -288,6 +352,21 @@ namespace Stash.Providers
             result.Item.Overview = sceneData.Details;
             result.Item.PremiereDate = sceneData.Date;
 
+            // Map scene code to OriginalTitle
+            if (!string.IsNullOrEmpty(sceneData.Code))
+            {
+                result.Item.OriginalTitle = sceneData.Code;
+            }
+
+            // Map rating100 (0-100) to CommunityRating (0-10)
+            if (sceneData.Rating100.HasValue)
+            {
+                result.Item.CommunityRating = sceneData.Rating100.Value / 10.0f;
+            }
+
+            // Add StashDB provider IDs
+            AddStashIds(result.Item.ProviderIds, sceneData.StashIds);
+
             var studioName = sceneData.Studio?.Name;
             if (!string.IsNullOrEmpty(studioName))
             {
@@ -305,6 +384,21 @@ namespace Stash.Providers
                 var genreName = genreLink.Name;
 
                 result.Item.AddGenre(genreName);
+            }
+
+            // Add director if present
+            if (!string.IsNullOrEmpty(sceneData.Director))
+            {
+                var director = new PersonInfo
+                {
+                    Name = sceneData.Director,
+#if __EMBY__
+                    Type = PersonType.Director,
+#else
+                    Type = PersonKind.Director,
+#endif
+                };
+                result.AddPerson(director);
             }
 
             foreach (var actorLink in sceneData.Performers)
@@ -430,19 +524,22 @@ namespace Stash.Providers
             }
 
             data = http["data"]["findPerformer"].ToString();
-            var sceneData = JsonConvert.DeserializeObject<Performer>(data);
+            var performerData = JsonConvert.DeserializeObject<Performer>(data);
 
-            result.Item.OriginalTitle = string.Join(", ", sceneData.AliasList);
-            result.Item.Overview = sceneData.Details;
-            result.Item.PremiereDate = sceneData.BirthDate;
-            result.Item.EndDate = sceneData.DeathDate;
+            result.Item.OriginalTitle = string.Join(", ", performerData.AliasList);
+            result.Item.Overview = performerData.Details;
+            result.Item.PremiereDate = performerData.BirthDate;
+            result.Item.EndDate = performerData.DeathDate;
 
-            if (!string.IsNullOrEmpty(sceneData.Country))
+            if (!string.IsNullOrEmpty(performerData.Country))
             {
-                result.Item.ProductionLocations = new string[] { new RegionInfo(sceneData.Country).EnglishName };
+                result.Item.ProductionLocations = new string[] { new RegionInfo(performerData.Country).EnglishName };
             }
 
-            foreach (var genreLink in sceneData.Tags)
+            // Add StashDB provider IDs
+            AddStashIds(result.Item.ProviderIds, performerData.StashIds);
+
+            foreach (var genreLink in performerData.Tags)
             {
                 var genreName = genreLink.Name;
 
@@ -533,10 +630,19 @@ namespace Stash.Providers
                 return result;
             }
 
-            /*
             data = http["data"]["findStudio"].ToString();
-            var sceneData = JsonConvert.DeserializeObject<Models.Studio>(data);
-            */
+            var studioData = JsonConvert.DeserializeObject<Models.Studio>(data);
+
+            result.Item.Name = studioData.Name;
+
+            // Map studio details to Overview
+            if (!string.IsNullOrEmpty(studioData.Details))
+            {
+                result.Item.Overview = studioData.Details;
+            }
+
+            // Add StashDB provider IDs
+            AddStashIds(result.Item.ProviderIds, studioData.StashIds);
 
             result.HasMetadata = true;
 
@@ -570,6 +676,53 @@ namespace Stash.Providers
             });
 
             return result;
+        }
+
+        /// <summary>
+        /// Helper method to add StashDB provider IDs from stash_ids.
+        /// </summary>
+        private static void AddStashIds(Dictionary<string, string> providerIds, List<StashId> stashIds)
+        {
+            if (stashIds == null)
+            {
+                return;
+            }
+
+            foreach (var stashId in stashIds)
+            {
+                if (string.IsNullOrEmpty(stashId.Id) || string.IsNullOrEmpty(stashId.Endpoint))
+                {
+                    continue;
+                }
+
+                // Create a provider name based on the endpoint
+                // e.g., "https://stashdb.org" -> "StashDB"
+                var providerName = "StashDB";
+                if (stashId.Endpoint.Contains("stashdb.org", StringComparison.OrdinalIgnoreCase))
+                {
+                    providerName = "StashDB";
+                }
+                else if (stashId.Endpoint.Contains("pmvstash.org", StringComparison.OrdinalIgnoreCase))
+                {
+                    providerName = "PMVStash";
+                }
+                else if (stashId.Endpoint.Contains("fansdb.cc", StringComparison.OrdinalIgnoreCase) ||
+                         stashId.Endpoint.Contains("fansdb.xyz", StringComparison.OrdinalIgnoreCase))
+                {
+                    providerName = "FansDB";
+                }
+                else
+                {
+                    // Use a hash of the endpoint to create a unique provider name
+                    providerName = $"Stash-{stashId.Endpoint.GetHashCode():X8}";
+                }
+
+                // Only add if not already present
+                if (!providerIds.ContainsKey(providerName))
+                {
+                    providerIds[providerName] = stashId.Id;
+                }
+            }
         }
     }
 }
