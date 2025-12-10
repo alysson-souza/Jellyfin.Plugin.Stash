@@ -6,9 +6,6 @@ on:
       - main
     tags:
       - "v*"
-    paths:
-      - Jellyfin.Plugin.Stash/**
-      - .github/**
   pull_request:
     branches:
       - main
