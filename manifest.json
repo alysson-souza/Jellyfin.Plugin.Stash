@@ -10,18 +10,10 @@
       {
         "version": "1.0.0.1",
         "checksum": "b8ce19746d7d261bc9fcbe61ee0c06e5",
-        "changelog": "See release notes",
-        "targetAbi": "10.11.0.0",
-        "sourceUrl": "https://github.com/alysson-souza/Jellyfin.Plugin.Stash/releases/download/v1.0.0.1/Jellyfin.Plugin.Stash.zip",
-        "timestamp": "2025-12-10T18:53:24Z"
-      },
-      {
-        "version": "1.0.0.1",
-        "checksum": "",
         "changelog": "Fix: Configuration page loading spinner caused by GUID mismatch",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/alysson-souza/Jellyfin.Plugin.Stash/releases/download/v1.0.0.1/Jellyfin.Plugin.Stash.zip",
-        "timestamp": "2025-12-10T00:00:00Z"
+        "timestamp": "2025-12-10T18:53:24Z"
       },
       {
         "version": "1.0.0.0",

@@ -181,19 +181,20 @@ jobs:
           SOURCE_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/Jellyfin.Plugin.Stash.zip"
 
           # Use jq to update manifest.json
+          # First remove any existing entry with the same version, then prepend the new one
           jq --arg version "$VERSION" \
              --arg checksum "$CHECKSUM" \
              --arg changelog "$CHANGELOG" \
              --arg timestamp "$TIMESTAMP" \
              --arg sourceUrl "$SOURCE_URL" \
-             '.[0].versions = [{
+             '.[0].versions = ([{
                "version": $version,
                "checksum": $checksum,
                "changelog": $changelog,
                "targetAbi": "10.11.0.0",
                "sourceUrl": $sourceUrl,
                "timestamp": $timestamp
-             }] + .[0].versions' manifest.json > manifest.tmp.json
+             }] + [.[0].versions[] | select(.version != $version)])' manifest.json > manifest.tmp.json
 
           mv manifest.tmp.json manifest.json
 
