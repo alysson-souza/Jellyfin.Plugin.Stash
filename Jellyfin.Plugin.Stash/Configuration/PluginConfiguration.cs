@@ -28,6 +28,9 @@ namespace Stash.Configuration
             this.UseFilePath = true;
             this.UseFullPathToSearch = true;
 
+            this.PathPrefixJellyfin = string.Empty;
+            this.PathPrefixStash = string.Empty;
+
             this.AddDisambiguation = false;
 
             this.TagStyle = TagStyle.Genre;
@@ -44,6 +47,10 @@ namespace Stash.Configuration
         public bool UseFilePath { get; set; }
 
         public bool UseFullPathToSearch { get; set; }
+
+        public string PathPrefixJellyfin { get; set; }
+
+        public string PathPrefixStash { get; set; }
 
         public bool AddDisambiguation { get; set; }
 

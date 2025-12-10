@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Web;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
+using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
@@ -64,8 +65,26 @@ namespace Stash.Providers
             var query = searchInfo.Name;
             var path = Plugin.Instance.Configuration.UseFilePath ? searchInfo.Path : string.Empty;
 
+            Logger.Info($"[Stash] SceneSearch called - Name: '{searchInfo.Name}', Path: '{searchInfo.Path}', UseFilePath: {Plugin.Instance.Configuration.UseFilePath}");
+
+            // Apply path prefix mapping if configured
+            if (!string.IsNullOrEmpty(path))
+            {
+                var jellyfinPrefix = Plugin.Instance.Configuration.PathPrefixJellyfin ?? string.Empty;
+                var stashPrefix = Plugin.Instance.Configuration.PathPrefixStash ?? string.Empty;
+
+                Logger.Info($"[Stash] Path mapping - JellyfinPrefix: '{jellyfinPrefix}', StashPrefix: '{stashPrefix}'");
+
+                if (!string.IsNullOrEmpty(jellyfinPrefix) && path.StartsWith(jellyfinPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    path = stashPrefix + path.Substring(jellyfinPrefix.Length);
+                    Logger.Info($"[Stash] Path after mapping: '{path}'");
+                }
+            }
+
             if (string.IsNullOrEmpty(query))
             {
+                Logger.Warning("[Stash] Query is empty, returning empty result");
                 return result;
             }
 
@@ -75,10 +94,12 @@ namespace Stash.Providers
                 if (Plugin.Instance.Configuration.UseFullPathToSearch)
                 {
                     searchData = string.Format("path:{{value:\"{0}\",modifier:EQUALS}}", HttpUtility.JavaScriptStringEncode(path));
+                    Logger.Info($"[Stash] Using full path search: '{path}'");
                 }
                 else
                 {
                     searchData = string.Format("path:{{value:\"\\\"{0}\\\"\",modifier:INCLUDES}}", Path.GetFileNameWithoutExtension(path));
+                    Logger.Info($"[Stash] Using filename search: '{Path.GetFileNameWithoutExtension(path)}'");
                 }
 
                 searchData = string.Format("scene_filter:{{{0}}}", searchData);
@@ -86,21 +107,27 @@ namespace Stash.Providers
             else
             {
                 searchData = string.Format("filter:{{q:\"{0}\"}}", HttpUtility.JavaScriptStringEncode(query));
+                Logger.Info($"[Stash] Using title search: '{query}'");
             }
 
             var data = string.Format(Consts.SceneSearchQuery, searchData);
+            Logger.Info($"[Stash] GraphQL query: {data}");
             var http = await GetDataFromAPI(data, cancellationToken).ConfigureAwait(false);
 
             if (http == null)
             {
+                Logger.Warning("[Stash] GetDataFromAPI returned null");
                 return result;
             }
 
             data = http["data"]["findScenes"]["scenes"].ToString();
             var searchResults = JsonConvert.DeserializeObject<List<Scene>>(data);
 
+            Logger.Info($"[Stash] Found {searchResults.Count} scene(s)");
+
             if (!string.IsNullOrEmpty(path) && searchResults.Count > 1)
             {
+                Logger.Warning($"[Stash] Multiple results ({searchResults.Count}) for path search, returning empty result");
                 return result;
             }
 
@@ -123,6 +150,126 @@ namespace Stash.Providers
             var result = new MetadataResult<Movie>()
             {
                 Item = new Movie(),
+                People = new List<PersonInfo>(),
+            };
+
+            var data = string.Format(Consts.SceneQuery, HttpUtility.JavaScriptStringEncode(sceneID));
+
+            var http = await GetDataFromAPI(data, cancellationToken).ConfigureAwait(false);
+            if (http == null)
+            {
+                return result;
+            }
+
+            data = http["data"]["findScene"].ToString();
+            var sceneData = JsonConvert.DeserializeObject<Scene>(data);
+
+            result.Item.Name = sceneData.Title;
+            result.Item.Overview = sceneData.Details;
+            result.Item.PremiereDate = sceneData.Date;
+
+            var studioName = sceneData.Studio?.Name;
+            if (!string.IsNullOrEmpty(studioName))
+            {
+                var parentStudio = sceneData.Studio?.ParentStudio?.Name;
+                if (!string.IsNullOrEmpty(parentStudio))
+                {
+                    result.Item.AddStudio(parentStudio);
+                }
+
+                result.Item.AddStudio(studioName);
+            }
+
+            foreach (var genreLink in sceneData.Tags)
+            {
+                var genreName = genreLink.Name;
+
+                result.Item.AddGenre(genreName);
+            }
+
+            foreach (var actorLink in sceneData.Performers)
+            {
+                var actorName = (Plugin.Instance.Configuration.AddDisambiguation && !string.IsNullOrEmpty(actorLink.Disambiguation)) ? $"{actorLink.Name} ({actorLink.Disambiguation})" : actorLink.Name;
+                var actor = new PersonInfo
+                {
+                    ProviderIds = { { Plugin.Instance.Name, actorLink.Id } },
+                    Name = actorName,
+                    ImageUrl = actorLink.ImagePath,
+                };
+
+                result.AddPerson(actor);
+            }
+
+            result.HasMetadata = true;
+
+            return result;
+        }
+
+        public static async Task<MetadataResult<Video>> SceneUpdateVideo(string sceneID, CancellationToken cancellationToken)
+        {
+            var result = new MetadataResult<Video>()
+            {
+                Item = new Video(),
+                People = new List<PersonInfo>(),
+            };
+
+            var data = string.Format(Consts.SceneQuery, HttpUtility.JavaScriptStringEncode(sceneID));
+
+            var http = await GetDataFromAPI(data, cancellationToken).ConfigureAwait(false);
+            if (http == null)
+            {
+                return result;
+            }
+
+            data = http["data"]["findScene"].ToString();
+            var sceneData = JsonConvert.DeserializeObject<Scene>(data);
+
+            result.Item.Name = sceneData.Title;
+            result.Item.Overview = sceneData.Details;
+            result.Item.PremiereDate = sceneData.Date;
+
+            var studioName = sceneData.Studio?.Name;
+            if (!string.IsNullOrEmpty(studioName))
+            {
+                var parentStudio = sceneData.Studio?.ParentStudio?.Name;
+                if (!string.IsNullOrEmpty(parentStudio))
+                {
+                    result.Item.AddStudio(parentStudio);
+                }
+
+                result.Item.AddStudio(studioName);
+            }
+
+            foreach (var genreLink in sceneData.Tags)
+            {
+                var genreName = genreLink.Name;
+
+                result.Item.AddGenre(genreName);
+            }
+
+            foreach (var actorLink in sceneData.Performers)
+            {
+                var actorName = (Plugin.Instance.Configuration.AddDisambiguation && !string.IsNullOrEmpty(actorLink.Disambiguation)) ? $"{actorLink.Name} ({actorLink.Disambiguation})" : actorLink.Name;
+                var actor = new PersonInfo
+                {
+                    ProviderIds = { { Plugin.Instance.Name, actorLink.Id } },
+                    Name = actorName,
+                    ImageUrl = actorLink.ImagePath,
+                };
+
+                result.AddPerson(actor);
+            }
+
+            result.HasMetadata = true;
+
+            return result;
+        }
+
+        public static async Task<MetadataResult<Episode>> SceneUpdateEpisode(string sceneID, CancellationToken cancellationToken)
+        {
+            var result = new MetadataResult<Episode>()
+            {
+                Item = new Episode(),
                 People = new List<PersonInfo>(),
             };
 

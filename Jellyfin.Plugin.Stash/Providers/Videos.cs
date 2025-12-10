@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Controller.Entities;
-using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Providers;
@@ -21,18 +20,18 @@ using Jellyfin.Data.Enums;
 namespace Stash.Providers
 {
 #if __EMBY__
-    public class Movies : IRemoteMetadataProvider<Movie, MovieInfo>, IHasSupportedExternalIdentifiers
+    public class Videos : IRemoteMetadataProvider<Video, ItemLookupInfo>, IHasSupportedExternalIdentifiers
 #else
-    public class Movies : IRemoteMetadataProvider<Movie, MovieInfo>
+    public class Videos : IRemoteMetadataProvider<Video, ItemLookupInfo>
 #endif
     {
         public string Name => Plugin.Instance.Name;
 
-        public async Task<IEnumerable<RemoteSearchResult>> GetSearchResults(MovieInfo searchInfo, CancellationToken cancellationToken)
+        public async Task<IEnumerable<RemoteSearchResult>> GetSearchResults(ItemLookupInfo searchInfo, CancellationToken cancellationToken)
         {
             var result = new List<RemoteSearchResult>();
 
-            Logger.Info($"[Stash Movies] GetSearchResults called - searchInfo: {(searchInfo == null ? "null" : $"Name='{searchInfo.Name}', Path='{searchInfo.Path}'")}");
+            Logger.Info($"[Stash Videos] GetSearchResults called - searchInfo: {(searchInfo == null ? "null" : $"Name='{searchInfo.Name}', Path='{searchInfo.Path}'")}");
 
             if (searchInfo == null)
             {
@@ -42,10 +41,10 @@ namespace Stash.Providers
             searchInfo.ProviderIds.TryGetValue(Plugin.Instance.Name, out var curID);
             if (!string.IsNullOrEmpty(curID))
             {
-                var sceneData = new MetadataResult<Movie>()
+                var sceneData = new MetadataResult<Video>()
                 {
                     HasMetadata = false,
-                    Item = new Movie(),
+                    Item = new Video(),
                     People = new List<PersonInfo>(),
                 };
 
@@ -53,7 +52,7 @@ namespace Stash.Providers
 
                 try
                 {
-                    sceneData = await StashAPI.SceneUpdate(curID, cancellationToken).ConfigureAwait(false);
+                    sceneData = await StashAPI.SceneUpdateVideo(curID, cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception e)
                 {
@@ -106,14 +105,14 @@ namespace Stash.Providers
             return result;
         }
 
-        public async Task<MetadataResult<Movie>> GetMetadata(MovieInfo info, CancellationToken cancellationToken)
+        public async Task<MetadataResult<Video>> GetMetadata(ItemLookupInfo info, CancellationToken cancellationToken)
         {
-            Logger.Info($"[Stash Movies] GetMetadata called - info: {(info == null ? "null" : $"Name='{info.Name}', Path='{info.Path}'")}");
+            Logger.Info($"[Stash Videos] GetMetadata called - info: {(info == null ? "null" : $"Name='{info.Name}', Path='{info.Path}'")}");
 
-            var result = new MetadataResult<Movie>()
+            var result = new MetadataResult<Video>()
             {
                 HasMetadata = true,
-                Item = new Movie(),
+                Item = new Video(),
                 People = new List<PersonInfo>(),
             };
 
@@ -141,7 +140,7 @@ namespace Stash.Providers
             result.HasMetadata = false;
             try
             {
-                result = await StashAPI.SceneUpdate(curID, cancellationToken).ConfigureAwait(false);
+                result = await StashAPI.SceneUpdateVideo(curID, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception e)
             {
