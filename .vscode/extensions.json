@@ -1,0 +1,8 @@
+{
+    "recommendations": [
+        "editorconfig.editorconfig",
+        "github.vscode-github-actions",
+        "ms-dotnettools.csdevkit",
+        "sanaajani.taskrunnercode"
+    ]
+}
