@@ -127,7 +127,7 @@ namespace Stash.Api
     [Route("Plugins/Stash")]
     public class StashController : ControllerBase
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IHttpClientFactory httpClientFactory;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StashController"/> class.
@@ -135,7 +135,7 @@ namespace Stash.Api
         /// <param name="httpClientFactory">The HTTP client factory.</param>
         public StashController(IHttpClientFactory httpClientFactory)
         {
-            _httpClientFactory = httpClientFactory;
+            this.httpClientFactory = httpClientFactory;
         }
 
         /// <summary>
@@ -155,7 +155,7 @@ namespace Stash.Api
         {
             if (string.IsNullOrWhiteSpace(endpoint))
             {
-                return BadRequest(new TestConnectionResult
+                return this.BadRequest(new TestConnectionResult
                 {
                     Success = false,
                     Message = "Endpoint is required.",
@@ -167,7 +167,7 @@ namespace Stash.Api
                 // Normalize endpoint
                 endpoint = endpoint.Trim().TrimEnd('/');
                 var url = new Uri(new Uri(endpoint), "graphql");
-                using var httpClient = _httpClientFactory.CreateClient();
+                using var httpClient = this.httpClientFactory.CreateClient();
                 httpClient.Timeout = TimeSpan.FromSeconds(10);
 
                 using var request = new HttpRequestMessage(HttpMethod.Post, url);
@@ -187,7 +187,7 @@ namespace Stash.Api
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    return Ok(new TestConnectionResult
+                    return this.Ok(new TestConnectionResult
                     {
                         Success = false,
                         Message = $"HTTP {(int)response.StatusCode}: {response.ReasonPhrase}",
@@ -204,7 +204,7 @@ namespace Stash.Api
                     var errorMessage = errors[0].TryGetProperty("message", out var msg)
                         ? msg.GetString()
                         : "Unknown GraphQL error";
-                    return Ok(new TestConnectionResult
+                    return this.Ok(new TestConnectionResult
                     {
                         Success = false,
                         Message = $"GraphQL error: {errorMessage}",
@@ -216,7 +216,7 @@ namespace Stash.Api
                     stats.TryGetProperty("scene_count", out var sceneCountElement) &&
                     sceneCountElement.TryGetInt32(out var sceneCount))
                 {
-                    return Ok(new TestConnectionResult
+                    return this.Ok(new TestConnectionResult
                     {
                         Success = true,
                         Message = $"Connected! Stash responded with {sceneCount} scenes.",
@@ -224,7 +224,7 @@ namespace Stash.Api
                     });
                 }
 
-                return Ok(new TestConnectionResult
+                return this.Ok(new TestConnectionResult
                 {
                     Success = false,
                     Message = "Received a response, but it was not in the expected format.",
@@ -232,7 +232,7 @@ namespace Stash.Api
             }
             catch (OperationCanceledException)
             {
-                return Ok(new TestConnectionResult
+                return this.Ok(new TestConnectionResult
                 {
                     Success = false,
                     Message = "Connection timed out after 10 seconds.",
@@ -240,7 +240,7 @@ namespace Stash.Api
             }
             catch (HttpRequestException ex)
             {
-                return Ok(new TestConnectionResult
+                return this.Ok(new TestConnectionResult
                 {
                     Success = false,
                     Message = $"Connection failed: {ex.Message}",
@@ -249,7 +249,7 @@ namespace Stash.Api
             catch (JsonException ex)
             {
                 Logger.Error($"TestConnection JSON parse error: {ex.Message}");
-                return Ok(new TestConnectionResult
+                return this.Ok(new TestConnectionResult
                 {
                     Success = false,
                     Message = "Failed to parse response from server.",
@@ -257,7 +257,7 @@ namespace Stash.Api
             }
             catch (UriFormatException)
             {
-                return Ok(new TestConnectionResult
+                return this.Ok(new TestConnectionResult
                 {
                     Success = false,
                     Message = "Invalid endpoint URL format.",
