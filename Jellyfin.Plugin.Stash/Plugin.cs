@@ -58,9 +58,9 @@ namespace Stash
 
         public static Plugin Instance { get; private set; }
 
-        public override string Name => "Stash";
+        public override string Name => "Stash (Extended)";
 
-        public override Guid Id => Guid.Parse("57b8ef5d-8835-436d-9514-a709ee25faf2");
+        public override Guid Id => Guid.Parse("fb7a756d-d694-461a-99eb-2458b44f983f");
 
 #if __EMBY__
         public PluginConfiguration Configuration => this.GetOptions();
