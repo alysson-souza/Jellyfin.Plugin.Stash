@@ -8,6 +8,14 @@
     "overview": "Fetches metadata from your Stash server for Movies, Videos, Episodes, Collections, and Performers",
     "versions": [
       {
+        "version": "1.1.0.0",
+        "checksum": "de09b393efb76f0b5e9d869c1cdc09b5",
+        "changelog": "See release notes",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/alysson-souza/Jellyfin.Plugin.Stash/releases/download/v1.1.0.0/Jellyfin.Plugin.Stash.zip",
+        "timestamp": "2025-12-10T19:28:37Z"
+      },
+      {
         "version": "1.0.0.1",
         "checksum": "b8ce19746d7d261bc9fcbe61ee0c06e5",
         "changelog": "Fix: Configuration page loading spinner caused by GUID mismatch",
