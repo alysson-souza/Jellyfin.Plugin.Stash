@@ -1,22 +1,126 @@
 #nullable enable
 
 using System;
-using System.ComponentModel.DataAnnotations;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
+using Stash.Helpers;
+using Stash.Helpers.Utils;
+using Stash.Models;
+
+#if __EMBY__
+using MediaBrowser.Model.Services;
+#else
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Stash.Helpers;
-using Stash.Models;
+#endif
 
 namespace Stash.Api
 {
+#if __EMBY__
     /// <summary>
-    /// API controller for Stash plugin operations.
+    /// Request DTO for testing connection to Stash server.
+    /// </summary>
+    [Route("/Plugins/Stash/TestConnection", "GET")]
+    public class TestConnectionRequest : IReturn<TestConnectionResult>
+    {
+        public string Endpoint { get; set; } = string.Empty;
+
+        public string? ApiKey { get; set; }
+    }
+
+    /// <summary>
+    /// API service for Stash plugin operations (Emby).
+    /// </summary>
+    public class StashService : IService
+    {
+        public async Task<object> Get(TestConnectionRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Endpoint))
+            {
+                return new TestConnectionResult
+                {
+                    Success = false,
+                    Message = "Endpoint is required.",
+                };
+            }
+
+            try
+            {
+                var endpoint = request.Endpoint.Trim().TrimEnd('/');
+                var url = endpoint + "/graphql?query=" + Uri.EscapeDataString("{ stats { scene_count } }");
+
+                var headers = new Dictionary<string, string>
+                {
+                    { "Accept", "application/json" },
+                };
+
+                if (!string.IsNullOrEmpty(request.ApiKey))
+                {
+                    headers.Add("ApiKey", request.ApiKey);
+                }
+
+                var response = await HTTP.Request(url, CancellationToken.None, headers).ConfigureAwait(false);
+
+                if (!response.IsOK)
+                {
+                    return new TestConnectionResult
+                    {
+                        Success = false,
+                        Message = "HTTP request failed.",
+                    };
+                }
+
+                var json = JObject.Parse(response.Content);
+
+                if (json["errors"] != null && json["errors"]!.HasValues)
+                {
+                    var errorMessage = json["errors"]![0]?["message"]?.ToString() ?? "Unknown GraphQL error";
+                    return new TestConnectionResult
+                    {
+                        Success = false,
+                        Message = $"GraphQL error: {errorMessage}",
+                    };
+                }
+
+                var sceneCountToken = json["data"]?["stats"]?["scene_count"];
+                if (sceneCountToken != null && sceneCountToken.Type == JTokenType.Integer)
+                {
+                    var sceneCount = (int)sceneCountToken;
+                    return new TestConnectionResult
+                    {
+                        Success = true,
+                        Message = $"Connected! Stash responded with {sceneCount} scenes.",
+                        SceneCount = sceneCount,
+                    };
+                }
+
+                return new TestConnectionResult
+                {
+                    Success = false,
+                    Message = "Received a response, but it was not in the expected format.",
+                };
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"TestConnection error: {ex.Message}");
+                return new TestConnectionResult
+                {
+                    Success = false,
+                    Message = $"Connection failed: {ex.Message}",
+                };
+            }
+        }
+    }
+#else
+    /// <summary>
+    /// API controller for Stash plugin operations (Jellyfin).
     /// </summary>
     [ApiController]
     [Authorize]
@@ -161,4 +265,5 @@ namespace Stash.Api
             }
         }
     }
+#endif
 }
