@@ -149,16 +149,37 @@ jobs:
 
       - name: Determine version
         id: version
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+          INPUT_CHANGELOG: ${{ github.event.inputs.changelog }}
         run: |
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-            echo "changelog=${{ github.event.inputs.changelog }}" >> $GITHUB_OUTPUT
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            VERSION="$INPUT_VERSION"
+            CHANGELOG="$INPUT_CHANGELOG"
           else
             # Extract version from tag (v1.2.3.4 -> 1.2.3.4)
             VERSION=${GITHUB_REF#refs/tags/v}
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
-            echo "changelog=See release notes" >> $GITHUB_OUTPUT
+            # --match keeps the rolling "latest" dev tag out of the range
+            PREVIOUS_TAG=$(git describe --tags --abbrev=0 --match 'v[0-9]*' "v${VERSION}^" 2>/dev/null || true)
+            if [ -n "$PREVIOUS_TAG" ]; then
+              RANGE="${PREVIOUS_TAG}..v${VERSION}"
+              CHANGELOG=$(git log --no-merges --format='- %s' "$RANGE")
+              CHANGELOG="${CHANGELOG}
+
+          **Full changelog**: https://github.com/${GITHUB_REPOSITORY}/compare/${PREVIOUS_TAG}...v${VERSION}"
+            else
+              CHANGELOG=$(git log --no-merges --format='- %s' "v${VERSION}")
+            fi
+            [ -n "$CHANGELOG" ] || CHANGELOG="- No changes recorded"
           fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          {
+            echo 'changelog<<CHANGELOG_EOF'
+            echo "$CHANGELOG"
+            echo 'CHANGELOG_EOF'
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -173,12 +194,14 @@ jobs:
             **/Emby.Plugins.Stash.zip
 
       - name: Update manifest.json
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          CHANGELOG: ${{ steps.version.outputs.changelog }}
+          CHECKSUM: ${{ needs.build-jellyfin.outputs.checksum }}
+          REPOSITORY: ${{ github.repository }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          CHANGELOG="${{ steps.version.outputs.changelog }}"
-          CHECKSUM="${{ needs.build-jellyfin.outputs.checksum }}"
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          SOURCE_URL="https://github.com/${{ github.repository }}/releases/download/v${VERSION}/Jellyfin.Plugin.Stash.zip"
+          SOURCE_URL="https://github.com/${REPOSITORY}/releases/download/v${VERSION}/Jellyfin.Plugin.Stash.zip"
 
           # Use jq to update manifest.json
           # First remove any existing entry with the same version, then prepend the new one
