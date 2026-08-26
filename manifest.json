@@ -8,6 +8,14 @@
     "overview": "Fetches metadata from your Stash server for Movies, Videos, Episodes, Collections, and Performers",
     "versions": [
       {
+        "version": "1.1.1.0",
+        "checksum": "3624ba210a45b8659e83b2ee7284852f",
+        "changelog": "See release notes",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/alysson-souza/Jellyfin.Plugin.Stash/releases/download/v1.1.1.0/Jellyfin.Plugin.Stash.zip",
+        "timestamp": "2026-08-26T22:05:35Z"
+      },
+      {
         "version": "1.1.0.1",
         "checksum": "a7908288df562079c2d478a642c81f01",
         "changelog": "See release notes",
