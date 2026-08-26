@@ -14,12 +14,19 @@ namespace Stash.Helpers
 #if __EMBY__
         public static Task<HttpResponseInfo> SendAsync(string url, CancellationToken cancellationToken)
         {
-            return Plugin.Http.GetResponse(new HttpRequestOptions
+            var options = new HttpRequestOptions
             {
                 CancellationToken = cancellationToken,
                 Url = url,
                 EnableDefaultUserAgent = false,
-            });
+            };
+
+            if (!string.IsNullOrEmpty(Plugin.Instance.Configuration.StashAPIKey))
+            {
+                options.RequestHeaders["APIKey"] = Plugin.Instance.Configuration.StashAPIKey;
+            }
+
+            return Plugin.Http.GetResponse(options);
         }
 #else
         public static Task<HttpResponseMessage> SendAsync(string url, CancellationToken cancellationToken)

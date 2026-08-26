@@ -142,7 +142,7 @@ namespace Stash.Providers
                     ProviderIds = { { Plugin.Instance.Name, searchResult.Id } },
                     Name = searchResult.Title,
                     PremiereDate = searchResult.Date,
-                    ImageUrl = searchResult.Paths.Screenshot,
+                    ImageUrl = AuthorizedImageUrl(searchResult.Paths.Screenshot),
                 });
             }
 
@@ -228,7 +228,7 @@ namespace Stash.Providers
                 {
                     ProviderIds = { { Plugin.Instance.Name, actorLink.Id } },
                     Name = actorName,
-                    ImageUrl = actorLink.ImagePath,
+                    ImageUrl = AuthorizedImageUrl(actorLink.ImagePath),
                 };
 
                 result.AddPerson(actor);
@@ -318,7 +318,7 @@ namespace Stash.Providers
                 {
                     ProviderIds = { { Plugin.Instance.Name, actorLink.Id } },
                     Name = actorName,
-                    ImageUrl = actorLink.ImagePath,
+                    ImageUrl = AuthorizedImageUrl(actorLink.ImagePath),
                 };
 
                 result.AddPerson(actor);
@@ -408,7 +408,7 @@ namespace Stash.Providers
                 {
                     ProviderIds = { { Plugin.Instance.Name, actorLink.Id } },
                     Name = actorName,
-                    ImageUrl = actorLink.ImagePath,
+                    ImageUrl = AuthorizedImageUrl(actorLink.ImagePath),
                 };
 
                 result.AddPerson(actor);
@@ -442,13 +442,13 @@ namespace Stash.Providers
             result.Add(new RemoteImageInfo
             {
                 Type = ImageType.Primary,
-                Url = sceneData.Paths.Screenshot,
+                Url = AuthorizedImageUrl(sceneData.Paths.Screenshot),
             });
 
             result.Add(new RemoteImageInfo
             {
                 Type = ImageType.Backdrop,
-                Url = sceneData.Paths.Screenshot,
+                Url = AuthorizedImageUrl(sceneData.Paths.Screenshot),
             });
 
             if (sceneData.Studio.HasValue)
@@ -456,7 +456,7 @@ namespace Stash.Providers
                 result.Add(new RemoteImageInfo
                 {
                     Type = ImageType.Logo,
-                    Url = sceneData.Studio.Value.ImagePath,
+                    Url = AuthorizedImageUrl(sceneData.Studio.Value.ImagePath),
                 });
 
                 if (sceneData.Studio.Value.ParentStudio.HasValue)
@@ -464,7 +464,7 @@ namespace Stash.Providers
                     result.Add(new RemoteImageInfo
                     {
                         Type = ImageType.Logo,
-                        Url = sceneData.Studio.Value.ParentStudio.Value.ImagePath,
+                        Url = AuthorizedImageUrl(sceneData.Studio.Value.ParentStudio.Value.ImagePath),
                     });
                 }
             }
@@ -501,7 +501,7 @@ namespace Stash.Providers
                     ProviderIds = { { Plugin.Instance.Name, searchResult.Id } },
                     Name = searchResult.Name,
                     PremiereDate = searchResult.BirthDate,
-                    ImageUrl = searchResult.ImagePath,
+                    ImageUrl = AuthorizedImageUrl(searchResult.ImagePath),
                 });
             }
 
@@ -574,7 +574,7 @@ namespace Stash.Providers
             result.Add(new RemoteImageInfo
             {
                 Type = ImageType.Primary,
-                Url = sceneData.ImagePath,
+                Url = AuthorizedImageUrl(sceneData.ImagePath),
             });
 
             return result;
@@ -608,7 +608,7 @@ namespace Stash.Providers
                 {
                     ProviderIds = { { Plugin.Instance.Name, searchResult.Id } },
                     Name = searchResult.Name,
-                    ImageUrl = searchResult.ImagePath,
+                    ImageUrl = AuthorizedImageUrl(searchResult.ImagePath),
                 });
             }
 
@@ -672,10 +672,30 @@ namespace Stash.Providers
             result.Add(new RemoteImageInfo
             {
                 Type = ImageType.Logo,
-                Url = sceneData.ImagePath,
+                Url = AuthorizedImageUrl(sceneData.ImagePath),
             });
 
             return result;
+        }
+
+        /// <summary>
+        /// Returns an image URL a media server can fetch on its own.
+        /// </summary>
+        /// <remarks>
+        /// Emby converts a stored remote image URL to a local file through
+        /// ProviderManager.SaveImageFromRemoteUrl, which receives only the URL and so cannot
+        /// carry the API key in a header. Jellyfin always downloads through
+        /// <see cref="Stash.Helpers.UGetImageResponse"/>, where the header is set instead.
+        /// </remarks>
+        /// <param name="url">The image URL reported by Stash.</param>
+        /// <returns>The image URL to hand to the media server.</returns>
+        private static string AuthorizedImageUrl(string url)
+        {
+#if __EMBY__
+            return Helpers.ImageUrl.WithApiKey(url, Plugin.Instance.Configuration.StashAPIKey);
+#else
+            return url;
+#endif
         }
 
         /// <summary>

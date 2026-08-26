@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Stash.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <Configurations>Debug;Release;Release.Emby;Debug.Emby</Configurations>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <!-- The helper under test is a pure function with no Jellyfin or Emby dependency,
+       so it is compiled directly instead of referencing the SDK-bound plugin project. -->
+  <ItemGroup>
+    <Compile Include="../Jellyfin.Plugin.Stash/Helpers/ImageUrl.cs" />
+  </ItemGroup>
+
+</Project>
