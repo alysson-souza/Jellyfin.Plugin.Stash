@@ -105,7 +105,7 @@ namespace Stash.Configuration
         public bool ImportWatchedStatus { get; set; }
 
         [DisplayName("Record completed playback in Stash")]
-        [Description("Opt in to append shared Stash play history for the selected user's completed sessions.")]
+        [Description("Record the selected user's completed playback in Stash.")]
         public bool RecordCompletedPlayback { get; set; }
 
 #if __EMBY__

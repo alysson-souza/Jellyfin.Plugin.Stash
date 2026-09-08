@@ -82,7 +82,7 @@ Both options are off by default and apply only to videos already matched to Stas
 - **Import watched status from Stash**: run the task with the same name under Scheduled Tasks. It marks watched videos for the selected user without changing play counts or resume positions. It never marks a video unwatched.
 - **Record completed playback in Stash**: adds a play when the selected user reaches **85%** of a video, or the percentage you choose. Seeking past that point counts. Start a new playback after enabling it.
 
-Stash history is shared, not per-user. Import it only into the account you want associated with that history. Resume positions and unwatch actions are not synchronized.
+Choose the media-server user to sync with Stash. Resume positions and unwatch actions are not synchronized.
 
 If a connection failure leaves pending plays, run **Reconcile Stash playback** and check the status in plugin settings. Uncertain plays are not automatically resent, to avoid duplicates; unresolved entries may need checking in Stash.
 
