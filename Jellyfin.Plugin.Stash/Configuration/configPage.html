@@ -81,6 +81,34 @@
                         </div>
                     </div>
 
+                    <div class="verticalSection">
+                        <h2 class="sectionTitle">Playback synchronization</h2>
+                        <div class="selectContainer">
+                            <label class="selectLabel" for="PlaybackUserId">Playback synchronization user</label>
+                            <select is="emby-select" id="PlaybackUserId"><option value="">None</option></select>
+                            <div class="fieldDescription">Both directions require one selected user. Stash history is shared, not per-user.</div>
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="ImportWatchedStatus" type="checkbox" is="emby-checkbox" />
+                                <span>Import watched status from Stash</span>
+                            </label>
+                            <div class="fieldDescription">After saving, run Import watched status from Stash under Scheduled Tasks. Preserves counts, resume and existing watched status.</div>
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="RecordCompletedPlayback" type="checkbox" is="emby-checkbox" />
+                                <span>Record completed playback in Stash</span>
+                            </label>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="PlaybackCompletionPercent">Playback completion percentage</label>
+                            <input id="PlaybackCompletionPercent" type="number" min="1" max="100" step="1" value="85" required is="emby-input" />
+                            <div class="fieldDescription">Reaching this position counts, including seeking. Unknown duration does not count. No resume or unwatch export.</div>
+                        </div>
+                        <div id="PlaybackStatus" class="fieldDescription" role="status"></div>
+                        <div class="fieldDescription">Run Reconcile Stash playback to check pending operations. Ambiguous sends are never automatically resent.</div>
+                    </div>
                     <div>
                         <button is="emby-button" type="submit" class="raised button-submit block emby-button">
                             <span>Save</span>
@@ -110,6 +138,7 @@
 
                 page.addEventListener('pageshow', function () {
                     Dashboard.showLoadingMsg();
+                    field('PlaybackUserId').disabled = true;
                     ApiClient.getPluginConfiguration(pluginId).then(function (config) {
                         field('StashEndpoint').value = config.StashEndpoint;
                         field('StashAPIKey').value = config.StashAPIKey || '';
@@ -119,6 +148,22 @@
                         field('AddDisambiguation').checked = config.AddDisambiguation;
                         field('TagStyle').value = config.TagStyle;
                         field('ImportSceneMarkers').checked = config.ImportSceneMarkers === true;
+                        field('ImportWatchedStatus').checked = config.ImportWatchedStatus === true;
+                        field('RecordCompletedPlayback').checked = config.RecordCompletedPlayback === true;
+                        field('PlaybackCompletionPercent').value = config.PlaybackCompletionPercent || 85;
+                        ApiClient.getUsers().then(function (users) {
+                            var select = field('PlaybackUserId');
+                            select.replaceChildren(new Option('None', ''));
+                            users.forEach(function (user) { select.add(new Option(user.Name, user.Id)); });
+                            select.value = config.PlaybackUserId || '';
+                            select.disabled = false;
+                        }).catch(function () {
+                            field('PlaybackUserId').disabled = true;
+                            Dashboard.alert('Unable to load users. Reload before changing playback settings.');
+                        });
+                        ApiClient.ajax({ url: ApiClient.getUrl('Plugins/Stash/PlaybackStatus'), type: 'GET', dataType: 'json' })
+                            .then(function (result) { field('PlaybackStatus').textContent = result.Status || result.status; })
+                            .catch(function () { field('PlaybackStatus').textContent = 'Unable to load playback status.'; });
                         updatePathMappingVisibility();
                     }).catch(function () {
                         Dashboard.alert('Unable to load Stash settings. Reload this page before saving.');
@@ -178,6 +223,10 @@
                         config.AddDisambiguation = field('AddDisambiguation').checked;
                         config.TagStyle = field('TagStyle').value;
                         config.ImportSceneMarkers = field('ImportSceneMarkers').checked;
+                        config.ImportWatchedStatus = field('ImportWatchedStatus').checked;
+                        config.RecordCompletedPlayback = field('RecordCompletedPlayback').checked;
+                        if (!field('PlaybackUserId').disabled) config.PlaybackUserId = field('PlaybackUserId').value;
+                        config.PlaybackCompletionPercent = Number(field('PlaybackCompletionPercent').value);
                         return ApiClient.updatePluginConfiguration(pluginId, config);
                     }).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);
