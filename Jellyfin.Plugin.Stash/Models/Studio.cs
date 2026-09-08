@@ -23,6 +23,9 @@ namespace Stash.Models
         [JsonProperty(PropertyName = "rating100")]
         public int? Rating100 { get; set; }
 
+        [JsonProperty(PropertyName = "urls")]
+        public List<string> Urls { get; set; }
+
         [JsonProperty(PropertyName = "tags")]
         public List<Tags> Tags { get; set; }
 

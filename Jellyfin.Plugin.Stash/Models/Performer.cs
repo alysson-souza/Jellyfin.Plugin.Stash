@@ -39,6 +39,9 @@ namespace Stash.Models
         [JsonProperty(PropertyName = "rating100")]
         public int? Rating100 { get; set; }
 
+        [JsonProperty(PropertyName = "urls")]
+        public List<string> Urls { get; set; }
+
         [JsonProperty(PropertyName = "stash_ids")]
         public List<StashId> StashIds { get; set; }
     }

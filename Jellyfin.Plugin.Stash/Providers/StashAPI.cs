@@ -184,6 +184,8 @@ namespace Stash.Providers
                 result.Item.CommunityRating = sceneData.Rating100.Value / 10.0f;
             }
 
+            SourceUrl.Apply(result.Item, sceneData.Urls);
+
             // Add StashDB provider IDs
             AddStashIds(result.Item.ProviderIds, sceneData.StashIds);
 
@@ -274,6 +276,8 @@ namespace Stash.Providers
                 result.Item.CommunityRating = sceneData.Rating100.Value / 10.0f;
             }
 
+            SourceUrl.Apply(result.Item, sceneData.Urls);
+
             // Add StashDB provider IDs
             AddStashIds(result.Item.ProviderIds, sceneData.StashIds);
 
@@ -363,6 +367,8 @@ namespace Stash.Providers
             {
                 result.Item.CommunityRating = sceneData.Rating100.Value / 10.0f;
             }
+
+            SourceUrl.Apply(result.Item, sceneData.Urls);
 
             // Add StashDB provider IDs
             AddStashIds(result.Item.ProviderIds, sceneData.StashIds);
@@ -536,6 +542,8 @@ namespace Stash.Providers
                 result.Item.CommunityRating = performerData.Rating100.Value / 10.0f;
             }
 
+            SourceUrl.Apply(result.Item, performerData.Urls);
+
             if (!string.IsNullOrEmpty(performerData.Country))
             {
                 result.Item.ProductionLocations = new string[] { new RegionInfo(performerData.Country).EnglishName };
@@ -650,6 +658,8 @@ namespace Stash.Providers
             {
                 result.Item.CommunityRating = studioData.Rating100.Value / 10.0f;
             }
+
+            SourceUrl.Apply(result.Item, studioData.Urls);
 
             foreach (var tag in studioData.Tags)
             {
