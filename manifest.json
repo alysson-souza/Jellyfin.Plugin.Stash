@@ -10,7 +10,7 @@
       {
         "version": "1.1.1.0",
         "checksum": "3624ba210a45b8659e83b2ee7284852f",
-        "changelog": "See release notes",
+        "changelog": "### Fixed\n- Emby: images from an authenticated Stash instance failed to download, leaving posters, backdrops, studio logos, and performer photos empty while text metadata imported normally. Stash omits the API key from the image paths it returns over GraphQL, an unauthenticated request is redirected to the login page and answers `200 text/html`, and Emby converts stored remote image URLs through `ProviderManager.SaveImageFromRemoteUrl`, which accepts no request headers. The image saver rejected the HTML with `Unable to determine image file extension from mime type text/html`.\n\n  Image URLs reported by the Emby build now carry the configured key as an `apikey` query parameter, and Emby image requests send the `APIKey` header. Jellyfin already authenticated through `UGetImageResponse` and is unchanged.\n\n### Upgrading\n- Refresh metadata with \"Replace existing images\" on affected items. Emby does not retry a failed image on its own.\n- The API key now appears in image URLs stored in the Emby library database and written to `embyserver.txt`. Rotating the key requires another refresh.\n\nFull changelog: https://github.com/alysson-souza/Jellyfin.Plugin.Stash/compare/v1.1.0.1...v1.1.1.0",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/alysson-souza/Jellyfin.Plugin.Stash/releases/download/v1.1.1.0/Jellyfin.Plugin.Stash.zip",
         "timestamp": "2026-08-26T22:05:35Z"
@@ -18,7 +18,7 @@
       {
         "version": "1.1.0.1",
         "checksum": "a7908288df562079c2d478a642c81f01",
-        "changelog": "See release notes",
+        "changelog": "No runtime changes.\n\n### Changed\n- Dependencies updated.\n- `StashController` uses `this` consistently.\n- Added VSCode default solution and recommended extensions.\n\n### Known issue\n- The DLL is stamped `AssemblyVersion 1.1.0.0` while the tag and manifest report `1.1.0.1`, because the bump missed `Stash.csproj`. Install and update work; the dashboard reports the wrong version. Corrected in `v1.1.1.0`.\n\nFull changelog: https://github.com/alysson-souza/Jellyfin.Plugin.Stash/compare/v1.1.0.0...v1.1.0.1",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/alysson-souza/Jellyfin.Plugin.Stash/releases/download/v1.1.0.1/Jellyfin.Plugin.Stash.zip",
         "timestamp": "2026-01-24T00:02:16Z"
@@ -26,7 +26,7 @@
       {
         "version": "1.1.0.0",
         "checksum": "de09b393efb76f0b5e9d869c1cdc09b5",
-        "changelog": "See release notes",
+        "changelog": "### Added\n- Scene rating, director, and studio code are mapped to the matching Jellyfin and Emby fields. Stash `rating100` is scaled to the 0 to 10 range.\n- Items record StashDB IDs. The stash-box endpoint selects the provider name: StashDB, PMVStash, FansDB, or a stable name derived from any other endpoint.\n\n### Fixed\n- Manifest generation produced duplicate entries.\n- Restored the missing `v1.0.0.1` manifest entry.\n\nFull changelog: https://github.com/alysson-souza/Jellyfin.Plugin.Stash/compare/v1.0.0.1...v1.1.0.0",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/alysson-souza/Jellyfin.Plugin.Stash/releases/download/v1.1.0.0/Jellyfin.Plugin.Stash.zip",
         "timestamp": "2025-12-10T19:28:37Z"
@@ -34,7 +34,7 @@
       {
         "version": "1.0.0.1",
         "checksum": "b8ce19746d7d261bc9fcbe61ee0c06e5",
-        "changelog": "Fix: Configuration page loading spinner caused by GUID mismatch",
+        "changelog": "### Fixed\n- `configPage.html` used the upstream plugin GUID instead of the fork's, so the configuration page never loaded saved settings.\n\nFull changelog: https://github.com/alysson-souza/Jellyfin.Plugin.Stash/compare/v1.0.0.0...v1.0.0.1",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/alysson-souza/Jellyfin.Plugin.Stash/releases/download/v1.0.0.1/Jellyfin.Plugin.Stash.zip",
         "timestamp": "2025-12-10T18:53:24Z"
@@ -42,7 +42,7 @@
       {
         "version": "1.0.0.0",
         "checksum": "1cfe6308ea27cc601aada05a4ed76027",
-        "changelog": "See release notes",
+        "changelog": "First release of Stash (Extended), forked from [DirtyRacer1337/Jellyfin.Plugin.Stash](https://github.com/DirtyRacer1337/Jellyfin.Plugin.Stash). New plugin GUID, so it installs alongside upstream.\n\n### Added\n- Video and Episode metadata providers, with expanded plugin configuration.\n- `TestConnection` endpoint for both Jellyfin and Emby.\n- `scripts/bump_version.sh` version bump helper.\n\n### Changed\n- Plugin renamed to Stash (Extended), new GUID.\n- Build and release workflow produces Jellyfin and Emby artifacts per tag.\n- README rewritten for the fork.\n\n### Fixed\n- Removed the workflow paths filter that blocked tag-triggered releases.\n\n### Install\nJellyfin: add the manifest repository from the README, or drop `Jellyfin.Plugin.Stash.zip` into your plugin directory.\nEmby: extract `Emby.Plugins.Stash.zip` into `config/plugins`.",
         "targetAbi": "10.11.0.0",
         "sourceUrl": "https://github.com/alysson-souza/Jellyfin.Plugin.Stash/releases/download/v1.0.0.0/Jellyfin.Plugin.Stash.zip",
         "timestamp": "2025-12-10T18:39:10Z"
