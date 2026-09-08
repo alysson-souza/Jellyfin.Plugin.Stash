@@ -8,6 +8,14 @@
     "overview": "Fetches metadata from your Stash server for Movies, Videos, Episodes, Collections, and Performers",
     "versions": [
       {
+        "version": "1.2.0.0",
+        "checksum": "7318dd737a542ea1d0fbedef531f782f",
+        "changelog": "### Changed\n- Jellyfin 12.0 is required. The Jellyfin build targets .NET 10 and `Jellyfin.Controller` 12.0.0, so it does not load on 10.11.\n- Jellyfin and Emby now carry separate version numbers. This tag ships Jellyfin 1.2.0.0 and Emby 1.1.1.0.\n- The Emby build has no code changes since 1.1.1.0. Installing it again changes nothing.\n- Older versions in the plugin dashboard now show their own release notes.\n\n### On Jellyfin 10.11\nStay on 1.1.1.0. It is still listed in the plugin repository, and Jellyfin hides 1.2.0.0 from 10.11 servers.",
+        "targetAbi": "12.0.0.0",
+        "sourceUrl": "https://github.com/alysson-souza/Jellyfin.Plugin.Stash/releases/download/v1.2.0.0/Jellyfin.Plugin.Stash.zip",
+        "timestamp": "2026-09-08T19:21:56Z"
+      },
+      {
         "version": "1.1.1.0",
         "checksum": "3624ba210a45b8659e83b2ee7284852f",
         "changelog": "### Fixed\n- Emby: images from an authenticated Stash instance failed to download, leaving posters, backdrops, studio logos, and performer photos empty while text metadata imported normally. Stash omits the API key from the image paths it returns over GraphQL, an unauthenticated request is redirected to the login page and answers `200 text/html`, and Emby converts stored remote image URLs through `ProviderManager.SaveImageFromRemoteUrl`, which accepts no request headers. The image saver rejected the HTML with `Unable to determine image file extension from mime type text/html`.\n\n  Image URLs reported by the Emby build now carry the configured key as an `apikey` query parameter, and Emby image requests send the `APIKey` header. Jellyfin already authenticated through `UGetImageResponse` and is unchanged.\n\n### Upgrading\n- Refresh metadata with \"Replace existing images\" on affected items. Emby does not retry a failed image on its own.\n- The API key now appears in image URLs stored in the Emby library database and written to `embyserver.txt`. Rotating the key requires another refresh.\n\nFull changelog: https://github.com/alysson-souza/Jellyfin.Plugin.Stash/compare/v1.1.0.1...v1.1.1.0",
