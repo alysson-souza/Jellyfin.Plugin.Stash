@@ -65,9 +65,15 @@ If a path or filename search finds more than one scene, the plugin skips the ite
 
 ## Metadata preferences
 
-**Tag style** chooses whether Stash tags become tags or genres in your media library. New configurations default to Tags; existing saved preferences are preserved. Choose Disabled to leave them out.
+**Tag style** chooses whether Stash tags become tags or genres in your media library, including studio collections. New configurations default to Tags; existing saved preferences are preserved. Choose **Do not import** to leave them out.
 
 Enable **Add disambiguation to performer names** to include the distinguishing text from Stash in performer names. This helps when performers share a name.
+
+Enable **Import scene markers as chapters** to import marker titles, timestamps and screenshots during metadata refresh. This is off by default. It works for movies, videos and episodes, preserves existing chapters, and updates only unchanged chapters previously imported by this plugin. Markers at the same timestamp share a chapter; markers beyond the video's duration are skipped. Disabling the option stops future imports without removing existing chapters.
+
+Scenes, performers and studios import the first valid HTTP(S) source URL as a **Stash source** external link. Additional source URLs remain available in Stash. Studios and performers also import ratings on the same 0–10 scale as scenes.
+
+Jellyfin uses its standard settings controls. Emby uses its native generated editor, including a masked API-key field. Stash groups are not automatically turned into collections or playlists.
 
 ---
 

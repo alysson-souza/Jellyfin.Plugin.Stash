@@ -1,245 +1,194 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="utf-8">
     <title>Stash</title>
-    <style>
-        #TestConnection:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-
-        /* Visual grouping for path mapping section */
-        .nested-option {
-            margin: 1em 0;
-            padding: 1em;
-            background: rgba(255,255,255,0.03);
-            border-radius: 0.25em;
-        }
-    </style>
 </head>
 <body>
     <div id="ConfigurationPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-select,emby-checkbox,emby-button">
         <div data-role="content">
             <div class="content-primary">
-                <h1>Stash</h1>
                 <form id="ConfigForm">
-                    <h2>Connection</h2>
-                    <div class="fieldDescription">Tell the plugin how to reach your Stash server. The URL should point to the Stash UI/API (for example <code>http://localhost:9999</code>). The API key can be generated in Stash under <em>Settings → Security</em>.</div>
-                    <div class="inputContainer">
-                        <input id="StashEndpoint" name="StashEndpoint" type="text" is="emby-input" label="Stash Endpoint" />
-                        <div class="fieldDescription">Base URL of your Stash instance, including port. Do not include <code>/graphql</code>.</div>
-                    </div>
-                    <div class="inputContainer">
-                        <input id="StashAPIKey" name="StashAPIKey" type="password" is="emby-input" label="Stash API Key" autocomplete="new-password" />
-                        <div class="fieldDescription">Used for authenticated GraphQL calls. Leave blank only if your Stash instance allows anonymous access.</div>
-                    </div>
-                    <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-                        <button id="TestConnection" is="emby-button" type="button" class="raised button-submit emby-button">
-                            <span>Test connection</span>
-                        </button>
-                        <div id="TestStatus" class="fieldDescription"></div>
-                    </div>
-
-                    <h2>Scene matching</h2>
-                    <div class="selectContainer">
-                        <label class="selectLabel" for="MatchingMode">Find scenes in Stash by</label>
-                        <select is="emby-select" id="MatchingMode" name="MatchingMode" class="emby-select-withcolor emby-select">
-                            <option value="title">Title (search by item name)</option>
-                            <option value="filename">Filename (match by file name only)</option>
-                            <option value="fullpath">Full path (exact path match)</option>
-                        </select>
-                        <div class="fieldDescription">
-                            <strong>Title:</strong> Searches Stash using the item's name.<br>
-                            <strong>Filename:</strong> Matches by the file name without directory, useful when paths differ.<br>
-                            <strong>Full path:</strong> Requires the exact file path to match. Use path mapping below if directories differ.
+                    <div class="verticalSection">
+                        <h2 class="sectionTitle">Connection</h2>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="StashEndpoint">Stash endpoint</label>
+                            <input id="StashEndpoint" name="StashEndpoint" type="url" is="emby-input" required />
+                            <div class="fieldDescription">Base URL of your Stash instance, including port. Do not include <code>/graphql</code>.</div>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="StashAPIKey">Stash API key</label>
+                            <input id="StashAPIKey" name="StashAPIKey" type="password" is="emby-input" autocomplete="new-password" />
+                            <div class="fieldDescription">Find your API key in Stash under Settings &gt; Security. Leave blank only if Stash allows anonymous access.</div>
+                        </div>
+                        <div class="inputContainer">
+                            <button id="TestConnection" is="emby-button" type="button" class="raised emby-button">
+                                <span>Test connection</span>
+                            </button>
+                            <div id="TestStatus" class="fieldDescription" role="status" aria-live="polite"></div>
                         </div>
                     </div>
-                    <div id="PathMappingContainer" class="nested-option">
-                        <h3 style="margin-top:0;">Path mapping</h3>
-                        <div class="fieldDescription">Translate media server paths to Stash paths if they use different mount points.</div>
-                        <table style="width:100%; border-collapse:collapse; margin:0.75em 0;">
-                            <tr>
-                                <td style="width:45%; padding-right:0.5em;">
-                                    <input id="PathPrefixJellyfin" name="PathPrefixJellyfin" type="text" is="emby-input" label="Media server prefix" />
-                                </td>
-                                <td style="width:10%; text-align:center; font-size:1.5em; color:#888; vertical-align:bottom; padding-bottom:0.6em;">→</td>
-                                <td style="width:45%; padding-left:0.5em;">
-                                    <input id="PathPrefixStash" name="PathPrefixStash" type="text" is="emby-input" label="Stash prefix" />
-                                </td>
-                            </tr>
-                        </table>
-                        <div class="fieldDescription">Leave blank if paths are identical. Example: <code>/media/video.mp4</code> → <code>/data/video.mp4</code></div>
+
+                    <div class="verticalSection">
+                        <h2 class="sectionTitle">Scene matching</h2>
+                        <div class="selectContainer">
+                            <label class="selectLabel" for="MatchingMode">Find scenes in Stash by</label>
+                            <select is="emby-select" id="MatchingMode" name="MatchingMode" class="emby-select-withcolor emby-select">
+                                <option value="title">Title</option>
+                                <option value="filename">Filename</option>
+                                <option value="fullpath">Full path</option>
+                            </select>
+                            <div class="fieldDescription">Title searches by item name. Filename ignores directories. Full path requires an exact match after path mapping.</div>
+                        </div>
+                        <div id="PathMappingContainer" class="hide">
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="PathPrefixJellyfin">Media server prefix</label>
+                                <input id="PathPrefixJellyfin" name="PathPrefixJellyfin" type="text" is="emby-input" />
+                                <div class="fieldDescription">The start of the path as this server sees it, such as <code>/media</code>.</div>
+                            </div>
+                            <div class="inputContainer">
+                                <label class="inputLabel inputLabelUnfocused" for="PathPrefixStash">Stash prefix</label>
+                                <input id="PathPrefixStash" name="PathPrefixStash" type="text" is="emby-input" />
+                                <div class="fieldDescription">The matching prefix in Stash, such as <code>/data</code>. Leave both prefixes blank if paths are identical.</div>
+                            </div>
+                        </div>
                     </div>
 
-                    <h2>Metadata options</h2>
-                    <div class="checkboxContainer checkboxContainer-withDescription">
-                        <label class="emby-checkbox-label">
-                            <input id="AddDisambiguation" name="AddDisambiguation" type="checkbox" is="emby-checkbox" />
-                            <span>Add disambiguation to performer names</span>
-                        </label>
-                        <div class="fieldDescription">Appends Stash disambiguation text in parentheses to performer names to avoid collisions.</div>
-                    </div>
-                    <div class="selectContainer">
-                        <label class="selectLabel" for="TagStyle">Tag style</label>
-                        <select is="emby-select" id="TagStyle" name="TagStyle" class="emby-select-withcolor emby-select">
-                            <option value="Tag">Tags</option>
-                            <option value="Genre">Genres</option>
-                            <option value="Disabled">Disabled</option>
-                        </select>
-                        <div class="fieldDescription">Controls how Stash tags are written to media library items: as tags, as genres, or not at all. New configurations default to tags.</div>
+                    <div class="verticalSection">
+                        <h2 class="sectionTitle">Metadata</h2>
+                        <div class="selectContainer">
+                            <label class="selectLabel" for="TagStyle">Tag style</label>
+                            <select is="emby-select" id="TagStyle" name="TagStyle" class="emby-select-withcolor emby-select">
+                                <option value="Tag">Tags</option>
+                                <option value="Genre">Genres</option>
+                                <option value="Disabled">Do not import</option>
+                            </select>
+                            <div class="fieldDescription">Where Stash tags are written in your library. New configurations default to tags.</div>
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="AddDisambiguation" name="AddDisambiguation" type="checkbox" is="emby-checkbox" />
+                                <span>Add disambiguation to performer names</span>
+                            </label>
+                            <div class="fieldDescription">Append the Stash disambiguation text so performers who share a name stay distinct.</div>
+                        </div>
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="ImportSceneMarkers" name="ImportSceneMarkers" type="checkbox" is="emby-checkbox" />
+                                <span>Import scene markers as chapters</span>
+                            </label>
+                            <div class="fieldDescription">On metadata refresh, import marker titles, timestamps and images. Existing chapters are preserved. Off by default.</div>
+                        </div>
                     </div>
 
-                    <button is="emby-button" type="submit" class="raised button-submit block emby-button">
-                        <span>Save</span>
-                    </button>
+                    <div>
+                        <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                            <span>Save</span>
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
         <script type="text/javascript">
-            var pluginConfig = {
-                pluginUniqueId: 'fb7a756d-d694-461a-99eb-2458b44f983f'
-            };
+            (function () {
+                var page = document.querySelector('#ConfigurationPage');
+                var pluginId = 'fb7a756d-d694-461a-99eb-2458b44f983f';
+                var testButton = page.querySelector('#TestConnection');
+                var status = page.querySelector('#TestStatus');
 
-            function normalizeEndpoint(raw) {
-                return (raw || '').replace(/\s+/g, '').replace(/\/*$/, '');
-            }
-
-            function setStatus(text) {
-                $('#TestStatus').text(text);
-            }
-
-            var isTestRunning = false;
-
-            function testConnection() {
-                if (isTestRunning) return;
-
-                var endpoint = normalizeEndpoint($('#StashEndpoint').val());
-                var apiKey = $('#StashAPIKey').val();
-                var $btn = $('#TestConnection');
-                var $btnText = $btn.find('span');
-
-                if (!endpoint) {
-                    setStatus('Please enter a Stash endpoint first.');
-                    return;
+                function field(id) {
+                    return page.querySelector('#' + id);
                 }
 
-                isTestRunning = true;
-                $btn.prop('disabled', true);
-                $btnText.text('Testing…');
-                setStatus('Connecting to Stash server…');
-
-                var params = new URLSearchParams({ endpoint: endpoint });
-                if (apiKey) {
-                    params.append('apiKey', apiKey);
+                function normalizeEndpoint(raw) {
+                    return (raw || '').replace(/\s+/g, '').replace(/\/*$/, '');
                 }
 
-                var url = ApiClient.getUrl('Plugins/Stash/TestConnection') + '?' + params.toString();
-
-                ApiClient.ajax({
-                    url: url,
-                    type: 'GET',
-                    dataType: 'json'
-                }).then(function(response) {
-                    var success = response && (response.success === true || response.Success === true);
-                    var message = response && (response.message || response.Message);
-                    if (success) {
-                        setStatus(message || 'Connected!');
-                    } else if (message) {
-                        setStatus(message);
-                    } else {
-                        setStatus('Unknown response from server.');
-                    }
-                    isTestRunning = false;
-                    $btn.prop('disabled', false);
-                    $btnText.text('Test connection');
-                }).catch(function(err) {
-                    var msg = 'Connection failed';
-                    if (err && err.status === 401) {
-                        msg = 'Unauthorized. Please refresh the page.';
-                    } else if (err && err.statusText) {
-                        msg = 'Error: ' + err.statusText;
-                    } else if (err && err.message) {
-                        msg = 'Error: ' + err.message;
-                    }
-                    setStatus(msg);
-                    isTestRunning = false;
-                    $btn.prop('disabled', false);
-                    $btnText.text('Test connection');
-                });
-            }
-
-            function getMatchingModeFromConfig(config) {
-                if (!config.UseFilePath) return 'title';
-                if (config.UseFullPathToSearch) return 'fullpath';
-                return 'filename';
-            }
-
-            function setConfigFromMatchingMode(config, mode) {
-                if (mode === 'title') {
-                    config.UseFilePath = false;
-                    config.UseFullPathToSearch = false;
-                } else if (mode === 'filename') {
-                    config.UseFilePath = true;
-                    config.UseFullPathToSearch = false;
-                } else {
-                    config.UseFilePath = true;
-                    config.UseFullPathToSearch = true;
+                function updatePathMappingVisibility() {
+                    field('PathMappingContainer').classList.toggle('hide', field('MatchingMode').value !== 'fullpath');
                 }
-            }
 
-            function updatePathMappingVisibility() {
-                var mode = $('#MatchingMode').val();
-                if (mode === 'fullpath') {
-                    $('#PathMappingContainer').show();
-                } else {
-                    $('#PathMappingContainer').hide();
-                }
-            }
-
-            $('#ConfigurationPage').on('pageshow', function () {
-                Dashboard.showLoadingMsg();
-                ApiClient.getPluginConfiguration(pluginConfig.pluginUniqueId).then(function (config) {
-                    $('#StashEndpoint').val(config.StashEndpoint).change();
-                    $('#StashAPIKey').val(config.StashAPIKey).change();
-                    $('#MatchingMode').val(getMatchingModeFromConfig(config)).change();
-                    $('#PathPrefixJellyfin').val(config.PathPrefixJellyfin || '');
-                    $('#PathPrefixStash').val(config.PathPrefixStash || '');
-                    $('#AddDisambiguation').prop('checked', config.AddDisambiguation);
-                    $('#TagStyle').val(config.TagStyle).change();
-                    updatePathMappingVisibility();
-
-                    Dashboard.hideLoadingMsg();
-                });
-            });
-
-            $('#MatchingMode').on('change', function() {
-                updatePathMappingVisibility();
-            });
-
-            $('#TestConnection').on('click', function (e) {
-                e.preventDefault();
-                testConnection();
-            });
-
-            $('#ConfigurationPage').on('submit', function () {
-                Dashboard.showLoadingMsg();
-                ApiClient.getPluginConfiguration(pluginConfig.pluginUniqueId).then(function (config) {
-                    config.StashEndpoint = normalizeEndpoint($('#StashEndpoint').val());
-                    config.StashAPIKey = $('#StashAPIKey').val();
-                    setConfigFromMatchingMode(config, $('#MatchingMode').val());
-                    config.PathPrefixJellyfin = $('#PathPrefixJellyfin').val().trim();
-                    config.PathPrefixStash = $('#PathPrefixStash').val().trim();
-                    config.AddDisambiguation = $('#AddDisambiguation').prop('checked');
-                    config.TagStyle = $('#TagStyle').val();
-
-                    ApiClient.updatePluginConfiguration(pluginConfig.pluginUniqueId, config).then(function (result) {
-                        Dashboard.processPluginConfigurationUpdateResult(result);
+                page.addEventListener('pageshow', function () {
+                    Dashboard.showLoadingMsg();
+                    ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                        field('StashEndpoint').value = config.StashEndpoint;
+                        field('StashAPIKey').value = config.StashAPIKey || '';
+                        field('MatchingMode').value = !config.UseFilePath ? 'title' : config.UseFullPathToSearch ? 'fullpath' : 'filename';
+                        field('PathPrefixJellyfin').value = config.PathPrefixJellyfin || '';
+                        field('PathPrefixStash').value = config.PathPrefixStash || '';
+                        field('AddDisambiguation').checked = config.AddDisambiguation;
+                        field('TagStyle').value = config.TagStyle;
+                        field('ImportSceneMarkers').checked = config.ImportSceneMarkers === true;
+                        updatePathMappingVisibility();
+                    }).catch(function () {
+                        Dashboard.alert('Unable to load Stash settings. Reload this page before saving.');
+                    }).finally(function () {
+                        Dashboard.hideLoadingMsg();
                     });
                 });
-                return false;
-            });
+
+                field('MatchingMode').addEventListener('change', updatePathMappingVisibility);
+
+                testButton.addEventListener('click', function () {
+                    if (testButton.disabled) return;
+                    var endpoint = normalizeEndpoint(field('StashEndpoint').value);
+                    if (!endpoint) {
+                        status.textContent = 'Enter a Stash endpoint first.';
+                        field('StashEndpoint').focus();
+                        return;
+                    }
+
+                    testButton.disabled = true;
+                    testButton.querySelector('span').textContent = 'Testing...';
+                    status.textContent = 'Connecting to Stash...';
+                    var params = new URLSearchParams({ endpoint: endpoint });
+                    if (field('StashAPIKey').value) {
+                        params.append('apiKey', field('StashAPIKey').value);
+                    }
+
+                    ApiClient.ajax({
+                        url: ApiClient.getUrl('Plugins/Stash/TestConnection') + '?' + params.toString(),
+                        type: 'GET',
+                        dataType: 'json'
+                    }).then(function (response) {
+                        var success = response && (response.success === true || response.Success === true);
+                        var message = response && (response.message || response.Message);
+                        status.textContent = message || (success ? 'Connected.' : 'Unable to connect to Stash.');
+                    }).catch(function (error) {
+                        status.textContent = error && error.status === 401
+                            ? 'Unauthorized. Refresh the page and try again.'
+                            : 'Connection failed. Check the endpoint and API key.';
+                    }).finally(function () {
+                        testButton.disabled = false;
+                        testButton.querySelector('span').textContent = 'Test connection';
+                    });
+                });
+
+                field('ConfigForm').addEventListener('submit', function (event) {
+                    event.preventDefault();
+                    Dashboard.showLoadingMsg();
+                    ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                        config.StashEndpoint = normalizeEndpoint(field('StashEndpoint').value);
+                        config.StashAPIKey = field('StashAPIKey').value;
+                        var mode = field('MatchingMode').value;
+                        config.UseFilePath = mode !== 'title';
+                        config.UseFullPathToSearch = mode === 'fullpath';
+                        config.PathPrefixJellyfin = field('PathPrefixJellyfin').value.trim();
+                        config.PathPrefixStash = field('PathPrefixStash').value.trim();
+                        config.AddDisambiguation = field('AddDisambiguation').checked;
+                        config.TagStyle = field('TagStyle').value;
+                        config.ImportSceneMarkers = field('ImportSceneMarkers').checked;
+                        return ApiClient.updatePluginConfiguration(pluginId, config);
+                    }).then(function (result) {
+                        Dashboard.processPluginConfigurationUpdateResult(result);
+                    }).catch(function () {
+                        Dashboard.alert('Unable to save Stash settings. Try again.');
+                    }).finally(function () {
+                        Dashboard.hideLoadingMsg();
+                    });
+                });
+            })();
         </script>
     </div>
 </body>
 </html>
-
