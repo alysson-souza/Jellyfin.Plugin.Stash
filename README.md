@@ -77,24 +77,14 @@ Jellyfin uses its standard settings controls. Emby uses its native generated edi
 
 ## Playback synchronization
 
-Both directions are off by default. Choose one existing account in **Playback synchronization user**, then enable only the directions you want and save. A missing or deleted user disables both directions. Existing settings are preserved.
+Both options are off by default and apply only to videos already matched to Stash. Select one account in **Playback synchronization user**, enable the options you want, and save.
 
-- **Import watched status from Stash** enables the manually run task with the same name under Scheduled Tasks. It matches movies, videos and episodes only by their existing `Stash (Extended)` scene IDs. A positive Stash play count marks an unwatched item played for the selected user. Counts, last-played dates and resume positions stay unchanged. Already watched items stay watched, and empty Stash history never unwatches anything. Currently playing items are skipped; rerun the task after playback finishes.
-- **Record completed playback in Stash** listens to playback start, progress and stop. Reaching the configured percentage, including by seeking, appends one Stash play and marks the local item watched. The default is 85%, inclusive, and the permitted range is 1–100. A known positive runtime is required. The plugin preserves the host's current resume position and never increments host-managed counts. The host may independently clear resume when its own completion rules apply.
+- **Import watched status from Stash**: run the task with the same name under Scheduled Tasks. It marks watched videos for the selected user without changing play counts or resume positions. It never marks a video unwatched.
+- **Record completed playback in Stash**: adds a play when the selected user reaches **85%** of a video, or the percentage you choose. Seeking past that point counts. Start a new playback after enabling it.
 
-A new playback session can count again. Duplicate progress and stop events do not. Playback must start while the option and selected user are valid; a session already in progress when you enable synchronization is not exported. Sessions without a playback-session ID, sessions attributed to multiple users, other users and items without a Stash scene ID are ignored.
+Stash history is shared, not per-user. Import it only into the account you want associated with that history. Resume positions and unwatch actions are not synchronized.
 
-Media-server watched status belongs to a user; Stash play history is shared. Importing it attributes that shared history to the one account you chose. Exporting appends to the same shared Stash history. This is not multi-user history merging. The plugin does not synchronize resume continuously, propagate unwatch actions, merge historical counts, change O-counters or export its own watched-status imports.
-
-### Pending operations and recovery
-
-The server data directory contains `stash-playback-sessions.json`. It stores session identifiers, scene and item IDs, the selected user, endpoint and completion timestamps, but no API key. The journal is written before an outbound mutation. Completed sessions and unresolved sends survive a restart. New, never-attempted completions may be sent during startup recovery or the **Reconcile Stash playback** task.
-
-Stash stores play timestamps to whole seconds and does not make `sceneAddPlay` idempotent. After an ambiguous failure, the plugin checks how many occurrences of the exact timestamp exist compared with the count before sending. Increased history can confirm the operation. If it cannot confirm success, the operation stays unresolved and is **never automatically resent**, even after restart. An independent concurrent write for the same scene and second cannot be distinguished from the plugin's write. No timestamps are fabricated or historical entries rewritten to work around this limitation.
-
-Run **Reconcile Stash playback** to recheck pending history, then reload plugin settings to see pending and unresolved counts. The task also logs its status. Unresolved operations may need manual inspection in Stash; do not repeatedly add plays to compensate for a timeout. Disabling export, changing the selected user or changing the endpoint suspends recovery for records that no longer match. Returning to the original selection permits reconciliation again.
-
-The journal keeps at most 10,000 session records. Unfinished sessions that stop below threshold are removed, but completed and unresolved records are not automatically discarded. At capacity, new sessions are blocked rather than losing duplicate protection. A corrupt journal disables the integration. An unwritable journal blocks outbound plays until storage is repaired and the server restarts. Back up the journal with the server configuration and investigate storage or capacity errors before restarting. Do not delete it while sessions or uncertain sends exist, since deleting it removes duplicate protection.
+If a connection failure leaves pending plays, run **Reconcile Stash playback** and check the status in plugin settings. Uncertain plays are not automatically resent, to avoid duplicates; unresolved entries may need checking in Stash.
 
 ---
 
