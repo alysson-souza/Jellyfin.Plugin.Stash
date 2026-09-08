@@ -19,9 +19,9 @@ using MediaBrowser.Model.Querying;
 #else
 using Jellyfin.Data.Enums;
 using Jellyfin.Database.Implementations.Entities;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.DependencyInjection;
 using MediaBrowser.Controller;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 #endif
 
 namespace Stash.Providers
@@ -83,7 +83,7 @@ namespace Stash.Providers
         {
             this.Unsubscribe();
             this.shutdown.Cancel();
-            await this.queue.ConfigureAwait(false);
+            await this.queue.WaitAsync(cancellationToken).ConfigureAwait(false);
         }
 #endif
 
@@ -125,7 +125,7 @@ namespace Stash.Providers
         private bool Allowed(string user, string endpoint)
         {
             var config = this.configuration();
-            return config.RecordCompletedPlayback && this.SelectedUser()?.Id.ToString("N") == user && Endpoint() == endpoint;
+            return config.RecordCompletedPlayback && this.SelectedUser()?.Id.ToString("N") == user && this.Endpoint() == endpoint;
         }
 
         private string Endpoint() => (this.configuration().StashEndpoint ?? string.Empty).TrimEnd('/');
@@ -138,16 +138,18 @@ namespace Stash.Providers
         }
 
         private void OnStart(object sender, PlaybackProgressEventArgs e) => this.Capture(e, true, false);
+
         private void OnProgress(object sender, PlaybackProgressEventArgs e) => this.Capture(e, false, false);
+
         private void OnStop(object sender, PlaybackStopEventArgs e) => this.Capture(e, false, true);
 
         private void Capture(PlaybackProgressEventArgs e, bool start, bool stop)
         {
             var user = this.SelectedUser();
-            var endpoint = Endpoint();
+            var endpoint = this.Endpoint();
             if (user == null || !this.Allowed(user.Id.ToString("N"), endpoint)
                 || e.Users == null || e.Users.Count != 1 || e.Users[0].Id != user.Id
-                || !Linked(e.Item, out var scene) || string.IsNullOrEmpty(e.PlaySessionId))
+                || !this.Linked(e.Item, out var scene) || string.IsNullOrEmpty(e.PlaySessionId))
             {
                 return;
             }
@@ -182,11 +184,13 @@ namespace Stash.Providers
                     {
                         return;
                     }
+
                     this.MarkPlayed(user, item, this.shutdown.Token);
                     if (!record.LocalMarked)
                     {
                         this.state.MarkLocal(record);
                     }
+
                     await this.state.SendOrReconcile(record, this.shutdown.Token).ConfigureAwait(false);
                 }
 
@@ -220,17 +224,26 @@ namespace Stash.Providers
             }
         }
 
-        public Task Import(IProgress<double> progress, CancellationToken token)
+        public async Task Import(IProgress<double> progress, CancellationToken token)
         {
-            return this.Enqueue(async () =>
+            if (this.state == null)
             {
+                throw new InvalidOperationException(this.Status);
+            }
+
+            using (var cancellation = CancellationTokenSource.CreateLinkedTokenSource(token, this.shutdown.Token))
+            {
+                token = cancellation.Token;
+                await this.Enqueue(async () =>
+            {
+                token.ThrowIfCancellationRequested();
                 var user = this.SelectedUser();
                 if (!this.configuration().ImportWatchedStatus || user == null)
                 {
                     return;
                 }
 
-                var endpoint = Endpoint();
+                var endpoint = this.Endpoint();
                 var query = new InternalItemsQuery
                 {
 #if __EMBY__
@@ -245,17 +258,18 @@ namespace Stash.Providers
                 foreach (var item in items)
                 {
                     token.ThrowIfCancellationRequested();
-                    if (!this.configuration().ImportWatchedStatus || this.SelectedUser()?.Id != user.Id || Endpoint() != endpoint)
+                    if (!this.configuration().ImportWatchedStatus || this.SelectedUser()?.Id != user.Id || this.Endpoint() != endpoint)
                     {
                         return;
                     }
 
-                    if (Linked(item, out var scene))
+                    if (this.Linked(item, out var scene))
                     {
                         var history = await this.client.History(endpoint, this.configuration().StashAPIKey, scene, token).ConfigureAwait(false);
+
                         // A network request can overlap playback or a settings change. Recheck immediately before saving.
                         if (history.Value<int>("play_count") > 0 && this.configuration().ImportWatchedStatus
-                            && this.SelectedUser()?.Id == user.Id && Endpoint() == endpoint && !this.IsPlaying(user, item))
+                            && this.SelectedUser()?.Id == user.Id && this.Endpoint() == endpoint && !this.IsPlaying(user, item))
                         {
                             this.MarkPlayed(user, item, token);
                         }
@@ -265,7 +279,8 @@ namespace Stash.Providers
                 }
 
                 progress?.Report(100);
-            });
+            }).ConfigureAwait(false);
+            }
         }
 
         private bool IsPlaying(User user, BaseItem item)
@@ -277,7 +292,18 @@ namespace Stash.Providers
 #endif
         }
 
-        public Task Reconcile(CancellationToken token) => this.Enqueue(() => this.Recover(token));
+        public async Task Reconcile(CancellationToken token)
+        {
+            if (this.state == null)
+            {
+                throw new InvalidOperationException(this.Status);
+            }
+
+            using (var cancellation = CancellationTokenSource.CreateLinkedTokenSource(token, this.shutdown.Token))
+            {
+                await this.Enqueue(() => this.Recover(cancellation.Token)).ConfigureAwait(false);
+            }
+        }
 
         private async Task Recover(CancellationToken token)
         {
@@ -287,7 +313,7 @@ namespace Stash.Providers
                 if (user?.Id.ToString("N") == record.User && this.Allowed(record.User, record.Endpoint) && Guid.TryParse(record.Item, out var id))
                 {
                     var item = this.library.GetItemById(id);
-                    if (Linked(item, out var scene) && scene == record.Scene && this.Allowed(record.User, record.Endpoint))
+                    if (this.Linked(item, out var scene) && scene == record.Scene && this.Allowed(record.User, record.Endpoint))
                     {
                         this.MarkPlayed(user, item, token);
                         this.state.MarkLocal(record);
@@ -307,7 +333,8 @@ namespace Stash.Providers
                     return Task.CompletedTask;
                 }
 
-                this.queue = this.queue.ContinueWith(async previous =>
+                var operation = this.queue.ContinueWith(
+                    async previous =>
                 {
                     try
                     {
@@ -318,14 +345,21 @@ namespace Stash.Providers
                     catch (OperationCanceledException)
                     {
                         this.Status = this.state.Status;
+                        throw;
                     }
                     catch (Exception)
                     {
                         this.Status = this.state.Status + " Last operation failed. Run Reconcile Stash playback to inspect pending history.";
                         Logger.Error(this.Status);
+                        throw;
                     }
                 }, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default).Unwrap();
-                return this.queue;
+
+                // Observe failures for event callbacks while returning them to scheduled-task callers.
+                this.queue = operation.ContinueWith(
+                    completed => { _ = completed.Exception; },
+                    CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+                return operation;
             }
         }
 

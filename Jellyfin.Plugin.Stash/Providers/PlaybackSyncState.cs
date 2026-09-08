@@ -34,6 +34,7 @@ namespace Stash.Providers
         }
 
         public string Status => $"Playback journal: {this.records.Count}/{Capacity} sessions, {this.records.Count(r => r.CompletedAt.HasValue && !r.Confirmed)} pending, {this.records.Count(r => r.Attempted && !r.Confirmed)} unresolved sends. Unresolved sends are never automatically resent.";
+
         public IEnumerable<PlaybackRecord> LocalPending => this.records.Where(r => r.CompletedAt.HasValue && !r.LocalMarked);
 
         public void MarkLocal(PlaybackRecord record)
@@ -97,6 +98,7 @@ namespace Stash.Providers
             {
                 throw new IOException("Playback journal write failed; restart after repairing storage.");
             }
+
             if (!record.CompletedAt.HasValue || record.Confirmed || !this.allowed(record.User, record.Endpoint))
             {
                 return;
@@ -131,6 +133,7 @@ namespace Stash.Providers
                 this.Save();
                 return;
             }
+
             await this.client.AddPlay(record.Endpoint, this.apiKey(), record.Scene, record.CompletedAt.Value, token).ConfigureAwait(false);
             record.Confirmed = true;
             this.Save();
@@ -162,6 +165,7 @@ namespace Stash.Providers
             {
                 File.Move(temporary, this.path);
             }
+
             this.writeFailed = false;
         }
     }
@@ -169,14 +173,23 @@ namespace Stash.Providers
     internal sealed class PlaybackRecord
     {
         public string Session { get; set; }
+
         public string User { get; set; }
+
         public string Endpoint { get; set; }
+
         public string Scene { get; set; }
+
         public string Item { get; set; }
+
         public DateTime? CompletedAt { get; set; }
+
         public int PreviousOccurrences { get; set; }
+
         public bool Attempted { get; set; }
+
         public bool Confirmed { get; set; }
+
         public bool LocalMarked { get; set; }
     }
 }

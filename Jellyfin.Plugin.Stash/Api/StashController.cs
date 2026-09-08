@@ -137,11 +137,11 @@ namespace Stash.Api
         {
             this.httpClientFactory = httpClientFactory;
         }
+
         [HttpGet("PlaybackStatus")]
         [Authorize(Policy = "RequiresElevation")]
         public ActionResult<object> PlaybackStatus()
             => new { Status = Providers.PlaybackSync.Instance?.Status ?? "Playback synchronization is not running." };
-
 
         /// <summary>
         /// Tests the connection to the Stash server.

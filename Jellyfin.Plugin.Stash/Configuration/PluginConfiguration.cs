@@ -1,5 +1,5 @@
-using System.ComponentModel;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Xml.Serialization;
 using Stash.Providers;
@@ -7,6 +7,7 @@ using Stash.Providers;
 #if __EMBY__
 using Emby.Web.GenericEdit;
 using Emby.Web.GenericEdit.Common;
+using Emby.Web.GenericEdit.Elements;
 using MediaBrowser.Model.Attributes;
 #else
 using MediaBrowser.Model.Plugins;
@@ -134,7 +135,7 @@ namespace Stash.Configuration
 
         [DisplayName("Playback synchronization status")]
         [XmlIgnore]
-        public string PlaybackSyncStatus => PlaybackSync.Instance?.Status ?? "Playback synchronization is not running.";
+        public LabelItem PlaybackSyncStatus => new LabelItem(PlaybackSync.Instance?.Status ?? "Playback synchronization is not running.");
 #endif
     }
 }
