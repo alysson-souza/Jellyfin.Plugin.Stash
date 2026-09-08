@@ -1,3 +1,5 @@
+using System.ComponentModel;
+
 #if __EMBY__
 using Emby.Web.GenericEdit;
 #else
@@ -33,7 +35,7 @@ namespace Stash.Configuration
 
             this.AddDisambiguation = false;
 
-            this.TagStyle = TagStyle.Genre;
+            this.TagStyle = TagStyle.Tag;
         }
 
 #if __EMBY__
@@ -48,6 +50,8 @@ namespace Stash.Configuration
 
         public bool UseFullPathToSearch { get; set; }
 
+        [DisplayName("Media server prefix")]
+        [Description("Translate this media server's path prefix to the Stash prefix.")]
         public string PathPrefixJellyfin { get; set; }
 
         public string PathPrefixStash { get; set; }

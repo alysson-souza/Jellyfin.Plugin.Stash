@@ -56,11 +56,11 @@
                     </div>
                     <div id="PathMappingContainer" class="nested-option">
                         <h3 style="margin-top:0;">Path mapping</h3>
-                        <div class="fieldDescription">Translate Jellyfin paths to Stash paths if they use different mount points.</div>
+                        <div class="fieldDescription">Translate media server paths to Stash paths if they use different mount points.</div>
                         <table style="width:100%; border-collapse:collapse; margin:0.75em 0;">
                             <tr>
                                 <td style="width:45%; padding-right:0.5em;">
-                                    <input id="PathPrefixJellyfin" name="PathPrefixJellyfin" type="text" is="emby-input" label="Jellyfin prefix" />
+                                    <input id="PathPrefixJellyfin" name="PathPrefixJellyfin" type="text" is="emby-input" label="Media server prefix" />
                                 </td>
                                 <td style="width:10%; text-align:center; font-size:1.5em; color:#888; vertical-align:bottom; padding-bottom:0.6em;">→</td>
                                 <td style="width:45%; padding-left:0.5em;">
@@ -68,7 +68,7 @@
                                 </td>
                             </tr>
                         </table>
-                        <div class="fieldDescription">Leave blank if paths are identical. Example: <code>/jellyfin/media/video.mp4</code> → <code>/data/video.mp4</code></div>
+                        <div class="fieldDescription">Leave blank if paths are identical. Example: <code>/media/video.mp4</code> → <code>/data/video.mp4</code></div>
                     </div>
 
                     <h2>Metadata options</h2>
@@ -82,11 +82,11 @@
                     <div class="selectContainer">
                         <label class="selectLabel" for="TagStyle">Tag style</label>
                         <select is="emby-select" id="TagStyle" name="TagStyle" class="emby-select-withcolor emby-select">
-                            <option value="Genre">Genres</option>
                             <option value="Tag">Tags</option>
+                            <option value="Genre">Genres</option>
                             <option value="Disabled">Disabled</option>
                         </select>
-                        <div class="fieldDescription">Controls how Stash tags are written to Jellyfin items: as genres, as tags, or not at all.</div>
+                        <div class="fieldDescription">Controls how Stash tags are written to media library items: as tags, as genres, or not at all. New configurations default to tags.</div>
                     </div>
 
                     <button is="emby-button" type="submit" class="raised button-submit block emby-button">

@@ -54,7 +54,7 @@ If the servers see the same file under different directories, fill in the path m
 | Jellyfin or Emby sees | `/media/videos/scene.mp4` |
 | Stash sees | `/data/scene.mp4` |
 
-Set **Jellyfin prefix** to `/media/videos` and **Stash prefix** to `/data`. The first field is called Jellyfin prefix in Emby too. Everything after the prefix must match, including subdirectories and the filename. Leave both fields empty if the paths are already identical.
+Set **Media server prefix** to `/media/videos` and **Stash prefix** to `/data`. Everything after the prefix must match, including subdirectories and the filename. Leave both fields empty if the paths are already identical.
 
 If full paths aren't practical, there are two other matching modes:
 
@@ -65,7 +65,7 @@ If a path or filename search finds more than one scene, the plugin skips the ite
 
 ## Metadata preferences
 
-**Tag style** chooses whether Stash tags become genres or tags in your media library. Choose Disabled to leave them out.
+**Tag style** chooses whether Stash tags become tags or genres in your media library. New configurations default to Tags; existing saved preferences are preserved. Choose Disabled to leave them out.
 
 Enable **Add disambiguation to performer names** to include the distinguishing text from Stash in performer names. This helps when performers share a name.
 
