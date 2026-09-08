@@ -1,81 +1,74 @@
-# Stash (Extended) for Jellyfin and Emby
+# Stash for Jellyfin and Emby
 
 [![MIT License](https://img.shields.io/github/license/alysson-souza/Jellyfin.Plugin.Stash)](./LICENSE)
 [![Current Release](https://img.shields.io/github/release/alysson-souza/Jellyfin.Plugin.Stash)](https://github.com/alysson-souza/Jellyfin.Plugin.Stash/releases/latest)
 [![Build status](https://img.shields.io/github/actions/workflow/status/alysson-souza/Jellyfin.Plugin.Stash/release.yml)](https://github.com/alysson-souza/Jellyfin.Plugin.Stash/releases/tag/latest)
 
-Metadata provider for [Stash](https://stashapp.cc/). Fork of [DirtyRacer1337/Jellyfin.Plugin.Stash](https://github.com/DirtyRacer1337/Jellyfin.Plugin.Stash) under the name "Stash (Extended)"; the new GUID means both can coexist.
+Use the metadata and artwork in your [Stash](https://stashapp.cc/) library in Jellyfin or Emby. The plugin matches your videos to Stash scenes and fetches their titles, descriptions, performers, studios, tags, and images.
 
-Differences from upstream:
-
-- Movie, Video, and Episode providers. Upstream treats scenes as Movies only.
-- Path prefix mapping for libraries where the media server and Stash mount the same files at different paths.
-
-## Requirements
-
-Jellyfin 12.0 or Emby 4.9. Stash must be reachable from the media server, with an API key unless Stash allows anonymous access.
+Your files need to be in both libraries already. This plugin supplies metadata, not the videos themselves. It supports movies, videos, and episodes.
 
 ## Install
 
-Jellyfin, repository: add `https://raw.githubusercontent.com/alysson-souza/Jellyfin.Plugin.Stash/main/manifest.json` under Dashboard, Plugins, Repositories.
+### Jellyfin
 
-Manual: download the archive from [Latest Release](https://github.com/alysson-souza/Jellyfin.Plugin.Stash/releases/latest).
+The current release requires Jellyfin 12.0. If you're on Jellyfin 10.11, use plugin version 1.1.1.0, which is still available in the repository.
 
-Jellyfin:
+1. Open **Dashboard → Plugins → Repositories** and add a repository with this URL:
 
-1. Extract `Jellyfin.Plugin.Stash.zip` into the plugin directory. See the [plugin installation guide](https://jellyfin.org/docs/general/server/plugins/index.html).
-2. Restart Jellyfin.
+   ```text
+   https://raw.githubusercontent.com/alysson-souza/Jellyfin.Plugin.Stash/main/manifest.json
+   ```
 
-Emby:
+2. Find **Stash (Extended)** in the plugin catalog and install it.
+3. Restart Jellyfin.
 
-1. Extract `Emby.Plugins.Stash.zip` into the `plugins` folder under the config directory. `/config/plugins` in the official Docker image.
-2. Restart Emby.
+### Emby
 
-## Configuration
+Requires Emby 4.9+.
 
-| Setting                          | Value                                  | Notes                                                                                                                  |
-| -------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Stash endpoint                   | `http://localhost:9999`                | Base URL including port. Omit `/graphql`; it is appended. Trailing slashes are stripped on save.                       |
-| API key                          |                                        | Generate in Stash under Settings, Security. Leave blank only for anonymous access.                                     |
-| Find scenes in Stash by          | `Title`, `Filename`, or `Full path`    | See below.                                                                                                             |
-| Jellyfin/Stash path prefixes     |                                        | Shown in Full path mode. Strip the Jellyfin prefix and prepend the Stash prefix. Leave both empty for identical paths. |
-| Add disambiguation to performers | off                                    | Appends Stash disambiguation text in parentheses, e.g. `Alex Smith (actress)`.                                         |
-| Tag style                        | `Genres` (default), `Tags`, `Disabled` | Where Stash tags are written. `Disabled` clears both.                                                                  |
+1. Download `Emby.Plugins.Stash.zip` from the [latest release](https://github.com/alysson-souza/Jellyfin.Plugin.Stash/releases/latest).
+2. Extract its contents into the `plugins` directory inside your Emby config directory. In Docker, this is `/config/plugins`.
+3. Restart Emby.
 
-Matching modes:
+## Connect to Stash
 
-- `Title` searches Stash by item name.
-- `Filename` matches by file name without directory or extension.
-- `Full path` requires exact path equality after prefix mapping.
+Open **Stash (Extended)** in your server's plugin settings.
 
-A path search returning multiple scenes matches nothing; the item stays untagged and the log records "Multiple results".
+1. Enter your Stash URL in **Stash Endpoint**, including the port if needed. For example, `http://192.168.1.10:9999`. Don't add `/graphql`.
+2. Copy your API key from **Settings → Security** in Stash into **Stash API Key**. Leave it blank only if Stash allows access without authentication.
+3. Click **Test connection**, then **Save**.
 
-Test connection verifies the endpoint and API key and reports the scene count.
+The URL must be reachable from the Jellyfin or Emby server, not just your browser. If you're using Docker, `localhost` points to the media server's own container, not the Stash container.
 
-## Metadata written
+In your library settings, enable **Stash (Extended)** as a metadata and image provider. Put it ahead of other providers if you want Stash metadata to take priority. Refresh metadata on an existing item to try it out before refreshing the whole library.
 
-Matched scenes receive:
+## Match your files
 
-| Field            | Source                                    |
-| ---------------- | ----------------------------------------- |
-| Title            | Scene title                               |
-| Overview         | Scene details                             |
-| Premiere date    | Scene date                                |
-| Original title   | Scene code                                |
-| Community rating | `rating100` scaled to 0-10                |
-| Studio           | Scene studio; parent studio created first |
-| Genres or tags   | Per tag style                             |
-| People           | Director and all performers               |
-| Official rating  | `XXX`                                     |
+Start with **Full path** under **Find scenes in Stash by**. This matches the file's path in Jellyfin or Emby against its path in Stash.
 
-Item types: performers resolve as Person, studios as BoxSet.
+If the servers see the same file under different directories, fill in the path mapping. For example:
 
-Images: Primary, Backdrop, and Logo for Movie, Video, and Episode; Primary for Person; Logo for BoxSet.
+| | Path |
+| --- | --- |
+| Jellyfin or Emby sees | `/media/videos/scene.mp4` |
+| Stash sees | `/data/scene.mp4` |
 
-## Scheduled task
+Set **Jellyfin prefix** to `/media/videos` and **Stash prefix** to `/data`. The first field is called Jellyfin prefix in Emby too. Everything after the prefix must match, including subdirectories and the filename. Leave both fields empty if the paths are already identical.
 
-Add Collection, under the Stash (Extended) category: creates one collection per studio from plugin-matched Movies. Default trigger weekly, Sunday 12:00.
+If full paths aren't practical, there are two other matching modes:
 
-## License
+- **Filename** searches using the filename without its extension. Use this only when filenames are distinct across your library.
+- **Title** searches Stash using the item's name in Jellyfin or Emby.
 
-MIT. See [LICENSE](./LICENSE).
+If a path or filename search finds more than one scene, the plugin skips the item rather than choosing one. Check for duplicate scenes in Stash, or switch from Filename to Full path to distinguish files in different folders.
+
+## Metadata preferences
+
+**Tag style** chooses whether Stash tags become genres or tags in your media library. Choose Disabled to leave them out.
+
+Enable **Add disambiguation to performer names** to include the distinguishing text from Stash in performer names. This helps when performers share a name.
+
+---
+
+Based on [DirtyRacer1337/Jellyfin.Plugin.Stash](https://github.com/DirtyRacer1337/Jellyfin.Plugin.Stash), with added video and episode support and path mapping. Released under the [MIT license](LICENSE).
