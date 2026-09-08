@@ -707,21 +707,12 @@ namespace Stash.Providers
         /// Returns an image URL a media server can fetch on its own.
         /// </summary>
         /// <remarks>
-        /// Emby converts a stored remote image URL to a local file through
-        /// ProviderManager.SaveImageFromRemoteUrl, which receives only the URL and so cannot
-        /// carry the API key in a header. Jellyfin always downloads through
-        /// <see cref="Stash.Helpers.UGetImageResponse"/>, where the header is set instead.
+        /// Both hosts also fetch images outside the provider callback. A resource-scoped signed
+        /// URL works on those paths without exposing the Stash API key.
         /// </remarks>
         /// <param name="url">The image URL reported by Stash.</param>
         /// <returns>The image URL to hand to the media server.</returns>
-        private static string AuthorizedImageUrl(string url)
-        {
-#if __EMBY__
-            return Helpers.ImageUrl.WithApiKey(url, Plugin.Instance.Configuration.StashAPIKey);
-#else
-            return url;
-#endif
-        }
+        private static string AuthorizedImageUrl(string url) => Plugin.Instance.Images.Create(url);
 
         /// <summary>
         /// Helper method to add StashDB provider IDs from stash_ids.

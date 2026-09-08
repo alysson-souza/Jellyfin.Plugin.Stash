@@ -106,9 +106,8 @@ namespace Stash.Providers
             var temporaryPath = path + ".tmp";
             try
             {
-                // Download ourselves so both hosts authenticate through the existing APIKey helper.
                 // The chapter API receives a local file, never an API key or a remote URL.
-                using (var response = await UGetImageResponse.SendAsync(screenshot.AbsoluteUri, cancellationToken).ConfigureAwait(false))
+                using (var response = await UGetImageResponse.SendAsync(Plugin.Instance.Images.Create(screenshot.AbsoluteUri), cancellationToken).ConfigureAwait(false))
                 {
 #if __EMBY__
                     var contentType = response.ContentType;

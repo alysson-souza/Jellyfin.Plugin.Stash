@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using MediaBrowser.Common.Net;
 #else
 using System.Net.Http;
+using MediaBrowser.Common.Net;
 #endif
 
 namespace Stash.Helpers
@@ -21,23 +22,15 @@ namespace Stash.Helpers
                 EnableDefaultUserAgent = false,
             };
 
-            if (!string.IsNullOrEmpty(Plugin.Instance.Configuration.StashAPIKey))
-            {
-                options.RequestHeaders["APIKey"] = Plugin.Instance.Configuration.StashAPIKey;
-            }
-
             return Plugin.Http.GetResponse(options);
         }
 #else
-        public static Task<HttpResponseMessage> SendAsync(string url, CancellationToken cancellationToken)
+        public static async Task<HttpResponseMessage> SendAsync(string url, CancellationToken cancellationToken)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, url);
-            if (!string.IsNullOrEmpty(Plugin.Instance.Configuration.StashAPIKey))
+            using (var client = Plugin.Http.CreateClient(NamedClient.Default))
             {
-                request.Headers.Add("APIKey", Plugin.Instance.Configuration.StashAPIKey);
+                return await client.GetAsync(url, cancellationToken).ConfigureAwait(false);
             }
-
-            return Plugin.Http.CreateClient().SendAsync(request, cancellationToken);
         }
 #endif
     }

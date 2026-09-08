@@ -11,12 +11,13 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
-  <!-- The helper under test is a pure function with no Jellyfin or Emby dependency,
-       so it is compiled directly instead of referencing the SDK-bound plugin project. -->
+  <!-- Exercise the shared signed-image boundary without either host SDK. -->
   <ItemGroup>
     <Compile Include="../Jellyfin.Plugin.Stash/Helpers/ImageUrl.cs" />
+    <Compile Include="../Jellyfin.Plugin.Stash/Helpers/SignedImageHandler.cs" />
   </ItemGroup>
 
 </Project>
