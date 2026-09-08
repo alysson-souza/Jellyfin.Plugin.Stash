@@ -41,7 +41,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "9.0.x"
+          dotnet-version: "10.0.x"
 
       - name: Restore dependencies
         run: dotnet restore
@@ -49,28 +49,28 @@ jobs:
       - name: Build Release
         run: dotnet build --configuration Release --no-restore
 
-      - name: Get version from csproj
+      - name: Get Jellyfin plugin version from csproj
         id: version
         run: |
-          VERSION=$(grep -oP '(?<=<AssemblyVersion>)[^<]+' Jellyfin.Plugin.Stash/Stash.csproj)
+          VERSION=$(grep -oP '(?<=<JellyfinPluginVersion>)[^<]+' Jellyfin.Plugin.Stash/Stash.csproj)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Detected version: $VERSION"
+          echo "Detected Jellyfin plugin version: $VERSION"
 
       - name: Prepare artifacts
         run: |
-          cd Jellyfin.Plugin.Stash/bin/Release/net9.0
+          cd Jellyfin.Plugin.Stash/bin/Release/net10.0
           mv Stash.dll Jellyfin.Plugin.Stash.dll
           mv Stash.pdb Jellyfin.Plugin.Stash.pdb
 
       - name: Create ZIP
         run: |
-          cd Jellyfin.Plugin.Stash/bin/Release/net9.0
+          cd Jellyfin.Plugin.Stash/bin/Release/net10.0
           zip -j Jellyfin.Plugin.Stash.zip Jellyfin.Plugin.Stash.dll Jellyfin.Plugin.Stash.pdb
 
       - name: Calculate checksum
         id: checksum
         run: |
-          CHECKSUM=$(md5sum Jellyfin.Plugin.Stash/bin/Release/net9.0/Jellyfin.Plugin.Stash.zip | awk '{print $1}')
+          CHECKSUM=$(md5sum Jellyfin.Plugin.Stash/bin/Release/net10.0/Jellyfin.Plugin.Stash.zip | awk '{print $1}')
           echo "checksum=$CHECKSUM" >> $GITHUB_OUTPUT
           echo "Checksum: $CHECKSUM"
 
@@ -80,7 +80,7 @@ jobs:
           if-no-files-found: error
           name: Jellyfin
           retention-days: 90
-          path: Jellyfin.Plugin.Stash/bin/Release/net9.0/Jellyfin.Plugin.Stash.zip
+          path: Jellyfin.Plugin.Stash/bin/Release/net10.0/Jellyfin.Plugin.Stash.zip
 
   build-emby:
     if: >-
@@ -168,16 +168,19 @@ jobs:
           else
             # Extract version from tag (v1.2.3.4 -> 1.2.3.4)
             VERSION=${GITHUB_REF#refs/tags/v}
+            # Release plumbing carries no meaning for someone reading the
+            # revision history in the plugin dashboard
+            SKIP=(--invert-grep --grep='^chore: update manifest' --grep='^chore: bump .*version')
             # --match keeps the rolling "latest" dev tag out of the range
             PREVIOUS_TAG=$(git describe --tags --abbrev=0 --match 'v[0-9]*' "v${VERSION}^" 2>/dev/null || true)
             if [ -n "$PREVIOUS_TAG" ]; then
               RANGE="${PREVIOUS_TAG}..v${VERSION}"
-              CHANGELOG=$(git log --no-merges --format='- %s' "$RANGE")
+              CHANGELOG=$(git log --no-merges "${SKIP[@]}" --format='- %s' "$RANGE")
               CHANGELOG="${CHANGELOG}
 
           **Full changelog**: https://github.com/${GITHUB_REPOSITORY}/compare/${PREVIOUS_TAG}...v${VERSION}"
             else
-              CHANGELOG=$(git log --no-merges --format='- %s' "v${VERSION}")
+              CHANGELOG=$(git log --no-merges "${SKIP[@]}" --format='- %s' "v${VERSION}")
             fi
             [ -n "$CHANGELOG" ] || CHANGELOG="- No changes recorded"
           fi
@@ -189,12 +192,30 @@ jobs:
             echo 'CHANGELOG_EOF'
           } >> "$GITHUB_OUTPUT"
 
+      - name: Verify artifact versions
+        id: artifacts
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          JELLYFIN_VERSION=$(grep -oP '(?<=<JellyfinPluginVersion>)[^<]+' Jellyfin.Plugin.Stash/Stash.csproj)
+          EMBY_VERSION=$(grep -oP '(?<=<EmbyPluginVersion>)[^<]+' Jellyfin.Plugin.Stash/Stash.csproj)
+          if [ "$JELLYFIN_VERSION" != "$VERSION" ]; then
+            echo "Release version $VERSION does not match <JellyfinPluginVersion> $JELLYFIN_VERSION" >&2
+            exit 1
+          fi
+          echo "emby_version=$EMBY_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Jellyfin artifact: $JELLYFIN_VERSION, Emby artifact: $EMBY_VERSION"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.version }}
           name: v${{ steps.version.outputs.version }}
-          body: ${{ steps.version.outputs.changelog }}
+          body: |
+            Jellyfin plugin ${{ steps.version.outputs.version }} for Jellyfin 12.0 - `Jellyfin.Plugin.Stash.zip`
+            Emby plugin ${{ steps.artifacts.outputs.emby_version }} for Emby 4.9 - `Emby.Plugins.Stash.zip`
+
+            ${{ steps.version.outputs.changelog }}
           draft: false
           prerelease: false
           files: |
@@ -222,7 +243,7 @@ jobs:
                "version": $version,
                "checksum": $checksum,
                "changelog": $changelog,
-               "targetAbi": "10.11.0.0",
+               "targetAbi": "12.0.0.0",
                "sourceUrl": $sourceUrl,
                "timestamp": $timestamp
              }] + [.[0].versions[] | select(.version != $version)])' manifest.json > manifest.tmp.json

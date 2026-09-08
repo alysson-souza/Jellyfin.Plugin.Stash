@@ -13,7 +13,7 @@ Differences from upstream:
 
 ## Requirements
 
-Jellyfin 10.11 or Emby 4.9. Stash must be reachable from the media server, with an API key unless Stash allows anonymous access.
+Jellyfin 12.0 or Emby 4.9. Stash must be reachable from the media server, with an API key unless Stash allows anonymous access.
 
 ## Install
 
