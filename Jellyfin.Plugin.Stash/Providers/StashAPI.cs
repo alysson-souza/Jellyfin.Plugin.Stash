@@ -531,6 +531,11 @@ namespace Stash.Providers
             result.Item.PremiereDate = performerData.BirthDate;
             result.Item.EndDate = performerData.DeathDate;
 
+            if (performerData.Rating100.HasValue)
+            {
+                result.Item.CommunityRating = performerData.Rating100.Value / 10.0f;
+            }
+
             if (!string.IsNullOrEmpty(performerData.Country))
             {
                 result.Item.ProductionLocations = new string[] { new RegionInfo(performerData.Country).EnglishName };
@@ -639,6 +644,16 @@ namespace Stash.Providers
             if (!string.IsNullOrEmpty(studioData.Details))
             {
                 result.Item.Overview = studioData.Details;
+            }
+
+            if (studioData.Rating100.HasValue)
+            {
+                result.Item.CommunityRating = studioData.Rating100.Value / 10.0f;
+            }
+
+            foreach (var tag in studioData.Tags)
+            {
+                result.Item.AddGenre(tag.Name);
             }
 
             // Add StashDB provider IDs

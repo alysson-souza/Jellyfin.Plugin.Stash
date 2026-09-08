@@ -36,6 +36,9 @@ namespace Stash.Models
         [JsonProperty(PropertyName = "country")]
         public string Country { get; set; }
 
+        [JsonProperty(PropertyName = "rating100")]
+        public int? Rating100 { get; set; }
+
         [JsonProperty(PropertyName = "stash_ids")]
         public List<StashId> StashIds { get; set; }
     }

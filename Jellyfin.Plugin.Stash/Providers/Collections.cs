@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
+using Stash.Configuration;
 using Stash.Helpers;
 
 #if __EMBY__
@@ -87,6 +88,23 @@ namespace Stash.Providers
             if (result.HasMetadata)
             {
                 result.Item.ProviderIds.Add(Plugin.Instance.Name, curID);
+
+                var tags = result.Item.Genres;
+                switch (Plugin.Instance.Configuration.TagStyle)
+                {
+                    case TagStyle.Disabled:
+                        result.Item.Genres = Array.Empty<string>();
+                        result.Item.Tags = Array.Empty<string>();
+                        break;
+                    case TagStyle.Genre:
+                        result.Item.Genres = tags.ToArray();
+                        result.Item.Tags = Array.Empty<string>();
+                        break;
+                    case TagStyle.Tag:
+                        result.Item.Genres = Array.Empty<string>();
+                        result.Item.Tags = tags.ToArray();
+                        break;
+                }
             }
 
             return result;

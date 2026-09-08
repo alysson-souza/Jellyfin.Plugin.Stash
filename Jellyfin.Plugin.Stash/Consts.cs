@@ -8,10 +8,10 @@ namespace Stash
 
         public const string PerformerSearchQuery = @"query{{findPerformers({0}){{performers{{id,name,disambiguation,image_path,birthdate}}}}}}";
 
-        public const string PerformerQuery = @"query{{findPerformer(id:{0}){{id,name,details,disambiguation,image_path,alias_list,birthdate,death_date,country,tags{{name}},stash_ids{{endpoint,stash_id}}}}}}";
+        public const string PerformerQuery = @"query{{findPerformer(id:{0}){{id,name,details,disambiguation,image_path,alias_list,birthdate,death_date,country,rating100,tags{{name}},stash_ids{{endpoint,stash_id}}}}}}";
 
         public const string StudiosSearchQuery = @"query{{findStudios({0}){{studios{{id,name,image_path}}}}}}";
 
-        public const string StudioQuery = @"query{{findStudio(id:{0}){{id,name,details,image_path,stash_ids{{endpoint,stash_id}}}}}}";
+        public const string StudioQuery = @"query{{findStudio(id:{0}){{id,name,details,image_path,rating100,tags{{name}},stash_ids{{endpoint,stash_id}}}}}}";
     }
 }

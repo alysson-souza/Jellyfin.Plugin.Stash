@@ -20,6 +20,12 @@ namespace Stash.Models
         [JsonProperty(PropertyName = "image_path")]
         public string ImagePath { get; set; }
 
+        [JsonProperty(PropertyName = "rating100")]
+        public int? Rating100 { get; set; }
+
+        [JsonProperty(PropertyName = "tags")]
+        public List<Tags> Tags { get; set; }
+
         [JsonProperty(PropertyName = "stash_ids")]
         public List<StashId> StashIds { get; set; }
     }
