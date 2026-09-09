@@ -16,9 +16,9 @@ The current release requires Jellyfin 12.0. If you're on Jellyfin 10.11, use plu
 
 1. Open **Dashboard → Plugins → Repositories** and add a repository with this URL:
 
-   ```text
-   https://raw.githubusercontent.com/alysson-souza/Jellyfin.Plugin.Stash/main/manifest.json
-   ```
+    ```text
+    https://raw.githubusercontent.com/alysson-souza/Jellyfin.Plugin.Stash/main/manifest.json
+    ```
 
 2. Find **Stash (Extended)** in the plugin catalog and install it.
 3. Restart Jellyfin.
@@ -49,10 +49,10 @@ Start with **Full path** under **Find scenes in Stash by**. This matches the fil
 
 If the servers see the same file under different directories, fill in the path mapping. For example:
 
-| | Path |
-| --- | --- |
+|                       | Path                      |
+| --------------------- | ------------------------- |
 | Jellyfin or Emby sees | `/media/videos/scene.mp4` |
-| Stash sees | `/data/scene.mp4` |
+| Stash sees            | `/data/scene.mp4`         |
 
 Set **Media server prefix** to `/media/videos` and **Stash prefix** to `/data`. Everything after the prefix must match, including subdirectories and the filename. Leave both fields empty if the paths are already identical.
 
