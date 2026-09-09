@@ -6,8 +6,8 @@
     <RootNamespace>Stash</RootNamespace>
     <!-- Per-host artifact versions. JellyfinPluginVersion is the release tag and manifest.json
          entry version; EmbyPluginVersion moves only when the Emby build itself changes. -->
-    <JellyfinPluginVersion>1.2.0.0</JellyfinPluginVersion>
-    <EmbyPluginVersion>1.1.1.0</EmbyPluginVersion>
+    <JellyfinPluginVersion>1.3.0.0</JellyfinPluginVersion>
+    <EmbyPluginVersion>1.2.0.0</EmbyPluginVersion>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <Configurations>Debug;Release;Release.Emby;Debug.Emby</Configurations>
   </PropertyGroup>
